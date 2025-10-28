@@ -1,11 +1,11 @@
-package me.bttf.springboot;
+package me.bttf.smartstore;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SpringBootApplicationMain {
+public class SmartStoreApplication {
     public static void main(String[] args) {
-        SpringApplication.run(SpringBootApplicationMain.class, args);
+        SpringApplication.run(SmartStoreApplication.class, args);
     }
 }
