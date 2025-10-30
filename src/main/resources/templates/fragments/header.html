@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- 헤더 영역 -->
+<header class="header" th:fragment="header">
+    <div class="header-top">
+        <div class="container">
+            <div class="logo">
+                <h1>스마트스토어</h1>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="상품을 검색해보세요" />
+                <button type="submit">검색</button>
+            </div>
+            <div class="header-icons">
+                <span>장바구니</span>
+                <span>로그인</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 카테고리 네비게이션 -->
+    <nav class="category-nav">
+        <div class="container">
+            <ul>
+                <li><a href="#">전체상품</a></li>
+                <li><a href="#">신상품</a></li>
+                <li><a href="#">베스트</a></li>
+                <li><a href="#">특가할인</a></li>
+                <li><a href="#">이벤트</a></li>
+                <li><a href="#">공지사항</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+</body>
+</html>
