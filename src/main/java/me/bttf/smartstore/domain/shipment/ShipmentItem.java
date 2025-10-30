@@ -1,21 +1,28 @@
-<<<<<<< HEAD
 package me.bttf.smartstore.domain.shipment;
 
-public class ShipmentItem {
-}
-=======
-package me.bttf.smartstore.shipment;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import me.bttf.smartstore.domain.common.BaseEntity;
+import me.bttf.smartstore.domain.order.OrderItem;
 
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToOne;
-import me.bttf.smartstore.common.BaseEntity;
-import me.bttf.smartstore.order.OrderItem;
-
+@Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
+@AttributeOverride(name = "id", column = @Column(name = "shipment_item_id"))
 public class ShipmentItem extends BaseEntity {
+
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shipment_id", nullable = false)
     private Shipment shipment;
 
-    @ManyToOne(fetch = FetchType.LAZY) private OrderItem orderItem;
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_item_id", nullable = false)
+    private OrderItem orderItem;
+
+    @Column(nullable = false)
     private Integer qty;
 }
->>>>>>> ff87ebc (feat: 엔티티 구현, h2-> mysql변경, mysqlDB에 엔티티 테이블 정상 생성 확인)

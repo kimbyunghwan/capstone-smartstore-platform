@@ -1,24 +1,28 @@
-<<<<<<< HEAD
 package me.bttf.smartstore.domain.common;
-
-public class Money {
-=======
-package me.bttf.smartstore.common;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Embeddable
-@Getter
 @NoArgsConstructor
+@Getter
 public class Money {
     @Column(name = "amount", nullable = false)
-    private Long amount;
+    private BigDecimal amount;
 
-    public Money(long amount){
+    public Money(BigDecimal amount){
         this.amount = amount;
     }
->>>>>>> ff87ebc (feat: 엔티티 구현, h2-> mysql변경, mysqlDB에 엔티티 테이블 정상 생성 확인)
+
+    public static Money of(long value) {
+        return new Money(BigDecimal.valueOf(value));
+    }
+
+    public static Money of(double value) {
+        return new Money(BigDecimal.valueOf(value));
+    }
 }

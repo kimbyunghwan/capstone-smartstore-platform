@@ -1,22 +1,39 @@
-<<<<<<< HEAD
 package me.bttf.smartstore.domain.member;
 
-public class Address {
-=======
-package me.bttf.smartstore.member;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import me.bttf.smartstore.domain.common.BaseEntity;
+
+import java.util.List;
 
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Address {
-    @ManyToOne(fetch = FetchType.LAZY) private Member member;
+@Table(
+        name = "address",
+        indexes = {
+                @Index(name = "ix_address_member", columnList = "member_id")
+        }
+)
+@AttributeOverride(name = "id", column = @Column(name = "address_id"))
+public class Address extends BaseEntity {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
+
     private String receiverName;
     private String phone;
-    private String zipcode; private String addr1; private String addr2;
+    private String zipcode;
+    private String addr1;
+    private String addr2;
+
+    @Column(name = "is_default", nullable = false)
     private boolean isDefault;
->>>>>>> ff87ebc (feat: 엔티티 구현, h2-> mysql변경, mysqlDB에 엔티티 테이블 정상 생성 확인)
+
+    public void setAsDefault(List<Address> existingAddresses) {
+        existingAddresses.forEach(addr -> addr.isDefault = false);
+        this.isDefault = true;
+    }
 }

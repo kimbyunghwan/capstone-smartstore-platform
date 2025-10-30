@@ -1,38 +1,44 @@
-<<<<<<< HEAD
 package me.bttf.smartstore.domain.order;
 
-public class OrderItem {
-=======
-package me.bttf.smartstore.order;
-
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import me.bttf.smartstore.common.BaseEntity;
-import me.bttf.smartstore.common.Money;
-import me.bttf.smartstore.product.Product;
-import me.bttf.smartstore.product.ProductOption;
+import lombok.NoArgsConstructor;
+import me.bttf.smartstore.domain.common.BaseEntity;
+import me.bttf.smartstore.domain.common.Money;
+import me.bttf.smartstore.domain.product.Product;
+import me.bttf.smartstore.domain.product.ProductOption;
 
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@AttributeOverride(name = "id", column = @Column(name = "order_item_id"))
 public class OrderItem extends BaseEntity {
+
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "option_id", nullable = false)
     private ProductOption option;
 
-    // 스냅샷
-    private String productName;
-    private String optionName;
+    @Column(nullable = false, length = 200)
+    private String productName; // 상품명 스냅샷
+
+    @Column(length = 200)
+    private String optionName; // 옵션명 스냅샷
+
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name="amount", column=@Column(name="unit_price"))
+            @AttributeOverride(name="amount", column=@Column(name="unit_price", precision = 15, scale = 2, nullable = false))
     })
     private Money unitPrice;
 
+    @Column(nullable = false)
     private Integer qty;
->>>>>>> ff87ebc (feat: 엔티티 구현, h2-> mysql변경, mysqlDB에 엔티티 테이블 정상 생성 확인)
 }

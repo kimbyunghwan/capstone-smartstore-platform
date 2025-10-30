@@ -1,26 +1,53 @@
-<<<<<<< HEAD
 package me.bttf.smartstore.domain.payment;
 
-public class Payment {
-=======
-package me.bttf.smartstore.payment;
-
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import me.bttf.smartstore.common.BaseEntity;
-import me.bttf.smartstore.order.Order;
+import lombok.NoArgsConstructor;
+import me.bttf.smartstore.domain.common.BaseEntity;
+import me.bttf.smartstore.domain.common.Money;
+import me.bttf.smartstore.domain.order.Order;
+
+import java.time.LocalDateTime;
 
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@Table(
+        name = "payment",
+        indexes = {
+                @Index(name = "ix_pg_transaction", columnList = "pg_transaction_id")
+        }
+)
+@AttributeOverride(name = "id", column = @Column(name = "payment_id"))
 public class Payment extends BaseEntity {
+
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private PaymentMethod method;
 
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "amount",
+                    column = @Column(name = "amount", precision = 14, scale = 2, nullable = false))
+    })
+    private Money amount;
+
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private PaymentStatus status;
-    private String pgTransactionId;
->>>>>>> ff87ebc (feat: 엔티티 구현, h2-> mysql변경, mysqlDB에 엔티티 테이블 정상 생성 확인)
+
+    // 결제 완료(승인) 시각
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
+    // PG사 거래 번호(= ERD의 pg_tid)
+    @Column(name = "pg_tid", length = 100, unique = true)
+    private String pgTid;
+
+
 }

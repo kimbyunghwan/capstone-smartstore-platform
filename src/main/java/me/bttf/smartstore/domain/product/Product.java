@@ -1,29 +1,36 @@
-<<<<<<< HEAD
 package me.bttf.smartstore.domain.product;
 
-public class Product {
-=======
-package me.bttf.smartstore.product;
-
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import me.bttf.smartstore.store.Store;
+import lombok.NoArgsConstructor;
+import me.bttf.smartstore.domain.common.BaseEntity;
+import me.bttf.smartstore.domain.review.Review;
+import me.bttf.smartstore.domain.store.Store;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Product {
+@AttributeOverride(name = "id", column = @Column(name = "product_id"))
+public class Product extends BaseEntity {
+
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id", nullable = false)
     private Store store;
+
+    @Column(nullable = false, length = 200)
     private String name;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private ProductStatus status;
-    private Integer rating;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductOption> options = new ArrayList<>();
->>>>>>> ff87ebc (feat: 엔티티 구현, h2-> mysql변경, mysqlDB에 엔티티 테이블 정상 생성 확인)
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
 }

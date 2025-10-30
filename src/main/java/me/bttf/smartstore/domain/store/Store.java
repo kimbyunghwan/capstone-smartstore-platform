@@ -1,25 +1,42 @@
-<<<<<<< HEAD
 package me.bttf.smartstore.domain.store;
 
-public class Store {
-=======
-package me.bttf.smartstore.store;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import me.bttf.smartstore.domain.common.BaseEntity;
+import me.bttf.smartstore.domain.member.Member;
+import me.bttf.smartstore.domain.product.ProductStatus;
 
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToOne;
-import me.bttf.smartstore.member.Member;
-import me.bttf.smartstore.product.ProductStatus;
-
-public class Store {
-    private String storeName;
-    private String intro;
-
-    @Enumerated(EnumType.STRING)
-    private ProductStatus status;
+@Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
+public class Store extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_member_id", nullable = false)
     private Member owner;
->>>>>>> ff87ebc (feat: 엔티티 구현, h2-> mysql변경, mysqlDB에 엔티티 테이블 정상 생성 확인)
+
+    @Column(name = "store_name", nullable = false, length = 100)
+    private String storeName;
+
+    @Column(name = "description", length = 255)
+    private String description;
+
+    // ENUM('ACTIVE','INACTIVE','SUSPENDED') NOT NULL
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private StoreStatus status;
+
+    @Builder
+    private Store(Member owner, String storeName, String description, StoreStatus status) {
+        if (owner == null) throw new IllegalArgumentException("owner 필수");
+        if (storeName == null || storeName.isBlank()) throw new IllegalArgumentException("storeName은 필수");
+        if (status == null) throw new IllegalArgumentException("status는 필수");
+        this.owner = owner;
+        this.storeName = storeName;
+        this.description = description;
+        this.status = status;
+    }
 }
