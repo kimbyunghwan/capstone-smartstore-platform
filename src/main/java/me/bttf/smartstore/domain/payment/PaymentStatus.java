@@ -1,4 +1,5 @@
 package me.bttf.smartstore.domain.payment;
 
-public class PaymentStatus {
+public enum PaymentStatus {
+    PENDING, AUTHORIZED, CAPTURED, CANCELED, FAILED, REFUNDED, PARTIAL_REFUNDED
 }

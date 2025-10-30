@@ -1,4 +1,5 @@
 package me.bttf.smartstore.domain.product;
 
-public class ProductStatus {
+public enum ProductStatus {
+    INACTIVE, ACTIVE, SOLD_OUT
 }
