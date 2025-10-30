@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트스토어 - 리뷰 작성</title>
+    <link th:href="@{/css/store.css}" rel="stylesheet" />
+</head>
+<body>
+<!-- 헤더 삽입 -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- 리뷰 작성 -->
+<section class="review-create-section">
+    <div class="container">
+        <!-- 페이지 타이틀 -->
+        <div class="page-header">
+            <h2 class="page-title">리뷰 작성</h2>
+            <p class="page-description">구매하신 상품은 어떠셨나요?</p>
+        </div>
+
+        <!-- 리뷰 작성 폼 -->
+        <div class="review-form-wrapper">
+            <form id="review-form" method="post" th:action="@{/reviews/create}" enctype="multipart/form-data">
+                <input type="hidden" name="productId" th:value="${product?.productId}" />
+
+                <!-- 상품 정보 -->
+                <div class="review-product-info">
+                    <div class="product-image">
+                        <img th:src="@{${product?.imageUrl}}" th:alt="${product?.name}" />
+                    </div>
+                    <div class="product-details">
+                        <h3 class="product-name" th:text="${product?.name}">상품명</h3>
+                        <p class="product-option" th:if="${product?.optionName}" th:text="'옵션: ' + ${product.optionName}">옵션: 블랙</p>
+                    </div>
+                </div>
+
+                <!-- 평점 -->
+                <div class="form-section">
+                    <label class="section-label">
+                        평점 <span class="required">*</span>
+                    </label>
+                    <div class="star-rating-input">
+                        <input type="radio" id="star5" name="rating" value="5" />
+                        <label for="star5" title="5점">★</label>
+                        <input type="radio" id="star4" name="rating" value="4" />
+                        <label for="star4" title="4점">★</label>
+                        <input type="radio" id="star3" name="rating" value="3" />
+                        <label for="star3" title="3점">★</label>
+                        <input type="radio" id="star2" name="rating" value="2" />
+                        <label for="star2" title="2점">★</label>
+                        <input type="radio" id="star1" name="rating" value="1" />
+                        <label for="star1" title="1점">★</label>
+                    </div>
+                    <p class="rating-text" id="rating-text">별점을 선택해주세요</p>
+                </div>
+
+                <!-- 리뷰 내용 -->
+                <div class="form-section">
+                    <label class="section-label" for="content">
+                        리뷰 내용 <span class="required">*</span>
+                    </label>
+                    <textarea
+                            id="content"
+                            name="content"
+                            rows="10"
+                            placeholder="상품에 대한 솔직한 리뷰를 작성해주세요.&#10;&#10;• 최소 10자 이상 작성해주세요&#10;• 상품과 관련없는 내용이나 욕설은 삭제될 수 있습니다"
+                            required
+                            minlength="10"></textarea>
+                    <div class="char-count">
+                        <span id="current-count">0</span> / 최소 10자
+                    </div>
+                </div>
+
+                <!-- 사진 첨부 -->
+                <div class="form-section">
+                    <label class="section-label">
+                        사진 첨부 (선택)
+                    </label>
+                    <div class="photo-upload-wrapper">
+                        <input type="file" id="photo-input" name="photos" multiple accept="image/*" style="display: none;" />
+                        <label for="photo-input" class="photo-upload-btn">
+                            <span class="upload-icon">📷</span>
+                            <span class="upload-text">사진 추가<br/>(최대 5장)</span>
+                        </label>
+                        <div class="photo-preview-area" id="photo-preview"></div>
+                    </div>
+                    <p class="photo-help-text">• 상품과 관련된 사진을 첨부하면 더욱 유용한 리뷰가 됩니다</p>
+                </div>
+
+                <!-- 추천 옵션 -->
+                <div class="form-section">
+                    <label class="section-label">
+                        이 상품을 추천하시나요?
+                    </label>
+                    <div class="recommend-options">
+                        <label class="recommend-item">
+                            <input type="radio" name="recommend" value="true" />
+                            <div class="recommend-box">
+                                <span class="emoji">👍</span>
+                                <span class="text">추천해요</span>
+                            </div>
+                        </label>
+                        <label class="recommend-item">
+                            <input type="radio" name="recommend" value="false" />
+                            <div class="recommend-box">
+                                <span class="emoji">👎</span>
+                                <span class="text">비추천해요</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 약관 동의 -->
+                <div class="form-section">
+                    <div class="agreement-box">
+                        <label class="agreement-label">
+                            <input type="checkbox" id="agree-terms" required />
+                            <span class="agreement-text">
+                                    리뷰 작성 시 <a href="#" class="link">개인정보 수집 및 이용</a>에 동의합니다
+                                    <span class="required">(필수)</span>
+                                </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 버튼 -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="history.back()">취소</button>
+                    <button type="submit" class="btn btn-submit">리뷰 등록</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+
+<!-- 푸터 삽입 -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    // 별점 선택
+    const ratingInputs = document.querySelectorAll('.star-rating-input input[type="radio"]');
+    const ratingText = document.getElementById('rating-text');
+    const ratingMessages = {
+        '5': '⭐ 최고예요!',
+        '4': '⭐ 만족해요',
+        '3': '⭐ 보통이에요',
+        '2': '⭐ 그저 그래요',
+        '1': '⭐ 별로예요'
+    };
+
+    ratingInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            ratingText.textContent = ratingMessages[this.value];
+            ratingText.style.color = '#2563EB';
+        });
+    });
+
+    // 글자 수 카운팅
+    const contentTextarea = document.getElementById('content');
+    const currentCount = document.getElementById('current-count');
+
+    contentTextarea.addEventListener('input', function() {
+        const length = this.value.length;
+        currentCount.textContent = length;
+
+        if (length >= 10) {
+            currentCount.style.color = '#059669';
+        } else {
+            currentCount.style.color = '#dc2626';
+        }
+    });
+
+    // 사진 미리보기
+    const photoInput = document.getElementById('photo-input');
+    const photoPreview = document.getElementById('photo-preview');
+    let selectedFiles = [];
+
+    photoInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+
+        if (selectedFiles.length + files.length > 5) {
+            alert('사진은 최대 5장까지 첨부할 수 있습니다.');
+            return;
+        }
+
+        files.forEach(file => {
+            if (file.type.startsWith('image/')) {
+                selectedFiles.push(file);
+                displayPhoto(file);
+            }
+        });
+    });
+
+    function displayPhoto(file) {
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            const photoItem = document.createElement('div');
+            photoItem.className = 'photo-item';
+            photoItem.innerHTML = `
+                    <img src="${e.target.result}" alt="미리보기" />
+                    <button type="button" class="photo-remove-btn" onclick="removePhoto(this, '${file.name}')">×</button>
+                `;
+            photoPreview.appendChild(photoItem);
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    function removePhoto(button, fileName) {
+        button.parentElement.remove();
+        selectedFiles = selectedFiles.filter(f => f.name !== fileName);
+    }
+
+    // 폼 제출 검증
+    document.getElementById('review-form').addEventListener('submit', function(e) {
+        const rating = document.querySelector('input[name="rating"]:checked');
+        const content = document.getElementById('content').value;
+        const agree = document.getElementById('agree-terms').checked;
+
+        if (!rating) {
+            e.preventDefault();
+            alert('별점을 선택해주세요.');
+            return;
+        }
+
+        if (content.length < 10) {
+            e.preventDefault();
+            alert('리뷰 내용을 최소 10자 이상 작성해주세요.');
+            return;
+        }
+
+        if (!agree) {
+            e.preventDefault();
+            alert('개인정보 수집 및 이용에 동의해주세요.');
+            return;
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트스토어 - 주문내역</title>
+    <link th:href="@{/css/store.css}" rel="stylesheet" />
+</head>
+<body>
+<!-- 헤더 삽입 -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- 주문 내역 -->
+<section class="order-list-section">
+    <div class="container">
+        <!-- 페이지 타이틀 -->
+        <div class="page-header">
+            <h2 class="page-title">주문 내역</h2>
+        </div>
+
+        <!-- 기간 필터 -->
+        <div class="period-filter">
+            <button class="period-btn active" data-period="3">최근 3개월</button>
+            <button class="period-btn" data-period="6">최근 6개월</button>
+            <button class="period-btn" data-period="12">최근 1년</button>
+            <div class="date-range">
+                <input type="date" id="startDate" />
+                <span>~</span>
+                <input type="date" id="endDate" />
+                <button class="btn btn-secondary">조회</button>
+            </div>
+        </div>
+
+        <!-- 주문 목록 -->
+        <div class="order-list">
+            <!-- 주문이 있을 때 -->
+            <div class="order-card" th:each="order : ${orders}" th:if="${orders != null and !orders.isEmpty()}">
+                <!-- 주문 헤더 -->
+                <div class="order-header">
+                    <div class="order-date">
+                        <span class="label">주문일자</span>
+                        <span class="value" th:text="${#temporals.format(order.createdAt, 'yyyy.MM.dd HH:mm')}">2024.10.20 14:30</span>
+                    </div>
+                    <div class="order-number">
+                        <span class="label">주문번호</span>
+                        <span class="value" th:text="${order.orderId}">20241020-001</span>
+                    </div>
+                    <a th:href="@{/orders/{id}(id=${order.orderId})}" class="btn-text">상세보기</a>
+                </div>
+
+                <!-- 주문 상품 목록 -->
+                <div class="order-items">
+                    <div class="order-item" th:each="item, stat : ${order.items}">
+                        <!-- 상품 이미지 -->
+                        <div class="item-image">
+                            <img th:src="@{${item.imageUrl}}" th:alt="${item.productName}" />
+                        </div>
+
+                        <!-- 상품 정보 -->
+                        <div class="item-info">
+                            <a th:href="@{/products/{id}(id=${item.productId})}" class="item-name" th:text="${item.productName}">상품명</a>
+                            <p class="item-option" th:if="${item.optionName}" th:text="'옵션: ' + ${item.optionName}">옵션: 블랙</p>
+                            <p class="item-price">
+                                <span th:text="${#numbers.formatInteger(item.unitPrice, 0, 'COMMA')} + '원'">29,900원</span>
+                                <span th:text="' / 수량: ' + ${item.qty} + '개'"> / 수량: 1개</span>
+                            </p>
+                        </div>
+
+                        <!-- 주문 상태 -->
+                        <div class="item-status">
+                                <span class="status-badge"
+                                      th:classappend="${order.status == 'PAID'} ? 'paid' :
+                                                       (${order.status == 'SHIPPED'} ? 'shipped' :
+                                                       (${order.status == 'COMPLETED'} ? 'completed' :
+                                                       (${order.status == 'CANCELLED'} ? 'cancelled' : '')))"
+                                      th:text="${order.status == 'PAYMENT_WAIT'} ? '결제대기' :
+                                               (${order.status == 'PAID'} ? '결제완료' :
+                                               (${order.status == 'SHIPPED'} ? '배송중' :
+                                               (${order.status == 'COMPLETED'} ? '배송완료' :
+                                               (${order.status == 'CANCELLED'} ? '주문취소' : '알수없음'))))">
+                                    배송완료
+                                </span>
+                        </div>
+
+                        <!-- 액션 버튼 -->
+                        <div class="item-actions">
+                            <!-- 배송 추적 (배송중일 때) -->
+                            <button class="btn-action"
+                                    th:if="${order.status == 'SHIPPED'}"
+                                    onclick="trackDelivery()">
+                                배송조회
+                            </button>
+
+                            <!-- 구매확정 (배송완료일 때) -->
+                            <button class="btn-action primary"
+                                    th:if="${order.status == 'COMPLETED' and !order.confirmed}"
+                                    th:onclick="'confirmOrder(' + ${order.orderId} + ')'">
+                                구매확정
+                            </button>
+
+                            <!-- 리뷰 작성 (구매확정 후) -->
+                            <button class="btn-action"
+                                    th:if="${order.confirmed and !item.hasReview}"
+                                    th:onclick="'location.href=\'/reviews/' + ${item.productId} + '/new\''">
+                                리뷰작성
+                            </button>
+
+                            <!-- 재주문 -->
+                            <button class="btn-action" th:onclick="'reorder(' + ${item.productId} + ')'">
+                                재주문
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 주문 푸터 -->
+                <div class="order-footer">
+                    <div class="order-total">
+                        <span class="label">총 결제금액</span>
+                        <strong class="amount" th:text="${#numbers.formatInteger(order.orderTotal, 0, 'COMMA')} + '원'">49,900원</strong>
+                    </div>
+                    <div class="footer-actions">
+                        <button class="btn-footer"
+                                th:if="${order.status == 'PAYMENT_WAIT' or order.status == 'PAID'}"
+                                th:onclick="'cancelOrder(' + ${order.orderId} + ')'">
+                            주문취소
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 주문이 없을 때 -->
+            <div class="empty-orders" th:if="${orders == null or orders.isEmpty()}">
+                <div class="empty-icon">📦</div>
+                <p class="empty-text">주문 내역이 없습니다.</p>
+                <a href="/products" class="btn btn-primary">쇼핑하러 가기</a>
+            </div>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div class="pagination" th:if="${totalPages > 1}">
+            <a class="page-btn"
+               th:href="@{/orders(page=${currentPage - 1})}"
+               th:classappend="${currentPage == 1} ? 'disabled' : ''">이전</a>
+
+            <a class="page-number"
+               th:each="page : ${#numbers.sequence(1, totalPages)}"
+               th:href="@{/orders(page=${page})}"
+               th:classappend="${page == currentPage} ? 'active' : ''"
+               th:text="${page}">1</a>
+
+            <a class="page-btn"
+               th:href="@{/orders(page=${currentPage + 1})}"
+               th:classappend="${currentPage == totalPages} ? 'disabled' : ''">다음</a>
+        </div>
+    </div>
+</section>
+
+<!-- 푸터 삽입 -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    // 기간 필터 버튼
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const period = this.dataset.period;
+            // TODO: 서버에 기간 필터 요청
+            console.log('필터 기간:', period + '개월');
+        });
+    });
+
+    // 배송 조회
+    function trackDelivery() {
+        alert('배송 조회 기능\n(택배사 API 연동 필요)');
+    }
+
+    // 구매 확정
+    function confirmOrder(orderId) {
+        if (confirm('구매를 확정하시겠습니까?\n확정 후에는 취소할 수 없습니다.')) {
+            // TODO: 서버에 구매확정 요청
+            alert('구매가 확정되었습니다.');
+            location.reload();
+        }
+    }
+
+    // 재주문
+    function reorder(productId) {
+        if (confirm('해당 상품을 다시 주문하시겠습니까?')) {
+            location.href = '/products/' + productId;
+        }
+    }
+
+    // 주문 취소
+    function cancelOrder(orderId) {
+        const reason = prompt('취소 사유를 입력해주세요:');
+        if (reason) {
+            if (confirm('주문을 취소하시겠습니까?')) {
+                // TODO: 서버에 주문취소 요청
+                alert('주문이 취소되었습니다.');
+                location.reload();
+            }
+        }
+    }
+</script>
+</body>
+</html>

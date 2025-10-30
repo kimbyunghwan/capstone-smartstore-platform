@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트스토어 - 장바구니</title>
+    <link th:href="@{/css/store.css}" rel="stylesheet" />
+</head>
+<body>
+<!-- 헤더 삽입 -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- 장바구니 -->
+<section class="cart-section">
+    <div class="container">
+        <!-- 페이지 타이틀 -->
+        <div class="page-header">
+            <h2 class="page-title">장바구니</h2>
+        </div>
+
+        <!-- 장바구니 내용 -->
+        <div class="cart-content">
+            <!-- 장바구니가 비어있지 않을 때 -->
+            <div class="cart-main" th:if="${cartItems != null and !cartItems.isEmpty()}">
+                <!-- 전체 선택 -->
+                <div class="cart-header">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="selectAll" checked />
+                        <span>전체선택 (<span id="selected-count" th:text="${cartItems?.size() ?: 0}">0</span>/<span th:text="${cartItems?.size() ?: 0}">0</span>)</span>
+                    </label>
+                    <button class="btn-text" id="deleteSelected">선택삭제</button>
+                </div>
+
+                <!-- 장바구니 아이템 리스트 -->
+                <div class="cart-items">
+                    <div class="cart-item" th:each="item : ${cartItems}">
+                        <!-- 체크박스 -->
+                        <div class="item-checkbox">
+                            <input type="checkbox" class="item-check" th:value="${item.cartItemId}" checked />
+                        </div>
+
+                        <!-- 상품 이미지 -->
+                        <div class="item-image">
+                            <a th:href="@{/products/{id}(id=${item.productId})}">
+                                <img th:src="@{${item.imageUrl}}" th:alt="${item.productName}" />
+                            </a>
+                        </div>
+
+                        <!-- 상품 정보 -->
+                        <div class="item-info">
+                            <a th:href="@{/products/{id}(id=${item.productId})}" class="item-name" th:text="${item.productName}">상품명</a>
+                            <div class="item-option" th:if="${item.optionName}" th:text="'옵션: ' + ${item.optionName}">옵션: 블랙</div>
+                            <div class="item-price">
+                                <span th:text="${#numbers.formatInteger(item.unitPrice, 0, 'COMMA')} + '원'">29,900원</span>
+                            </div>
+                        </div>
+
+                        <!-- 수량 조절 -->
+                        <div class="item-quantity">
+                            <div class="quantity-control">
+                                <button class="qty-btn minus" th:data-id="${item.cartItemId}">-</button>
+                                <input type="number" class="qty-input" th:value="${item.qty}" th:data-id="${item.cartItemId}" min="1" />
+                                <button class="qty-btn plus" th:data-id="${item.cartItemId}">+</button>
+                            </div>
+                        </div>
+
+                        <!-- 상품 합계 -->
+                        <div class="item-total">
+                            <strong class="item-total-price" th:text="${#numbers.formatInteger(item.unitPrice * item.qty, 0, 'COMMA')} + '원'">29,900원</strong>
+                        </div>
+
+                        <!-- 삭제 버튼 -->
+                        <div class="item-delete">
+                            <button class="btn-delete" th:data-id="${item.cartItemId}">×</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 장바구니가 비어있을 때 -->
+            <div class="cart-empty" th:if="${cartItems == null or cartItems.isEmpty()}">
+                <div class="empty-icon">🛒</div>
+                <p class="empty-text">장바구니가 비어있습니다.</p>
+                <a href="/products" class="btn btn-primary">쇼핑 계속하기</a>
+            </div>
+
+            <!-- 주문 요약 (사이드바) -->
+            <div class="cart-summary" th:if="${cartItems != null and !cartItems.isEmpty()}">
+                <h3 class="summary-title">주문 정보</h3>
+
+                <div class="summary-row">
+                    <span>상품금액</span>
+                    <span id="total-product-price" th:text="${#numbers.formatInteger(totalPrice ?: 0, 0, 'COMMA')} + '원'">0원</span>
+                </div>
+
+                <div class="summary-row">
+                    <span>배송비</span>
+                    <span id="delivery-fee">무료</span>
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="summary-row total">
+                    <span>총 결제금액</span>
+                    <strong id="final-total-price" th:text="${#numbers.formatInteger(totalPrice ?: 0, 0, 'COMMA')} + '원'">0원</strong>
+                </div>
+
+                <div class="summary-actions">
+                    <button class="btn btn-order" onclick="location.href='/order/create'">주문하기</button>
+                    <button class="btn btn-continue" onclick="location.href='/products'">쇼핑 계속하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 푸터 삽입 -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- 장바구니 기능 스크립트 -->
+<script>
+    // 전체 선택/해제
+    document.getElementById('selectAll')?.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.item-check');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateSelectedCount();
+        updateTotalPrice();
+    });
+
+    // 개별 체크박스 변경 시
+    document.querySelectorAll('.item-check').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectedCount();
+            updateTotalPrice();
+        });
+    });
+
+    // 선택된 항목 수 업데이트
+    function updateSelectedCount() {
+        const checkedCount = document.querySelectorAll('.item-check:checked').length;
+        document.getElementById('selected-count').textContent = checkedCount;
+    }
+
+    // 수량 변경
+    document.querySelectorAll('.qty-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.dataset.id;
+            const input = document.querySelector(`.qty-input[data-id="${itemId}"]`);
+            let value = parseInt(input.value);
+
+            if (this.classList.contains('minus') && value > 1) {
+                input.value = value - 1;
+            } else if (this.classList.contains('plus')) {
+                input.value = value + 1;
+            }
+
+            // 개별 상품 합계 업데이트
+            updateItemTotal(itemId);
+            updateTotalPrice();
+        });
+    });
+
+    // 개별 상품 합계 업데이트
+    function updateItemTotal(itemId) {
+        const item = document.querySelector(`.cart-item input[data-id="${itemId}"]`).closest('.cart-item');
+        const price = parseInt(item.querySelector('.item-price span').textContent.replace(/[^0-9]/g, ''));
+        const qty = parseInt(item.querySelector('.qty-input').value);
+        const total = price * qty;
+
+        item.querySelector('.item-total-price').textContent = total.toLocaleString() + '원';
+    }
+
+    // 전체 금액 업데이트
+    function updateTotalPrice() {
+        let total = 0;
+
+        document.querySelectorAll('.item-check:checked').forEach(checkbox => {
+            const item = checkbox.closest('.cart-item');
+            const itemTotal = parseInt(item.querySelector('.item-total-price').textContent.replace(/[^0-9]/g, ''));
+            total += itemTotal;
+        });
+
+        document.getElementById('total-product-price').textContent = total.toLocaleString() + '원';
+        document.getElementById('final-total-price').textContent = total.toLocaleString() + '원';
+    }
+
+    // 개별 삭제
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (confirm('해당 상품을 삭제하시겠습니까?')) {
+                const itemId = this.dataset.id;
+                // TODO: 서버에 삭제 요청
+                this.closest('.cart-item').remove();
+                updateSelectedCount();
+                updateTotalPrice();
+
+                // 모든 항목 삭제되면 빈 장바구니 표시
+                if (document.querySelectorAll('.cart-item').length === 0) {
+                    location.reload();
+                }
+            }
+        });
+    });
+
+    // 선택 삭제
+    document.getElementById('deleteSelected')?.addEventListener('click', function() {
+        const checked = document.querySelectorAll('.item-check:checked');
+        if (checked.length === 0) {
+            alert('삭제할 상품을 선택해주세요.');
+            return;
+        }
+
+        if (confirm(`선택한 ${checked.length}개 상품을 삭제하시겠습니까?`)) {
+            checked.forEach(checkbox => {
+                checkbox.closest('.cart-item').remove();
+            });
+            updateSelectedCount();
+            updateTotalPrice();
+
+            if (document.querySelectorAll('.cart-item').length === 0) {
+                location.reload();
+            }
+        }
+    });
+</script>
+</body>
+</html>
