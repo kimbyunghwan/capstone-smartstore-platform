@@ -53,7 +53,7 @@
                 </div>
                 <div class="stat-value" th:text="${pendingOrders ?: 0}">0</div>
                 <div class="stat-meta">
-                    <a href="#" class="link">확인하기 →</a>
+                    <a href="/seller/orders?status=PAYMENT_WAIT" class="link">확인하기 →</a>
                 </div>
             </div>
 
@@ -65,7 +65,7 @@
                 </div>
                 <div class="stat-value" th:text="${totalProducts ?: 0}">0</div>
                 <div class="stat-meta">
-                    <a href="/seller/products" class="link">관리하기 →</a>
+                    <a href="/seller/inventory" class="link">관리하기 →</a>
                 </div>
             </div>
         </div>
@@ -156,7 +156,6 @@
                 <div class="dashboard-box">
                     <div class="box-header">
                         <h3 class="box-title">공지사항</h3>
-                        <a href="#" class="link-more">더보기 →</a>
                     </div>
                     <div class="notice-list">
                         <div class="notice-item">

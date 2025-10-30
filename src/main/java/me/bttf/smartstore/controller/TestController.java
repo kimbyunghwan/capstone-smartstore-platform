@@ -63,4 +63,72 @@ public class TestController {
     public String sellerDashboard(Model model) {
         return "seller/dashboard";
     }
+
+    @GetMapping("/seller/product-new")
+    public String productNew() {
+        return "seller/product-new";
+    }
+
+    @PostMapping("/seller/products/create")
+    public String createProduct(@RequestParam String productName,
+                                @RequestParam String category,
+                                @RequestParam int originalPrice,
+                                @RequestParam int salePrice,
+                                @RequestParam int stockQty,
+                                @RequestParam(required = false) MultipartFile mainImage,
+                                @RequestParam(required = false) MultipartFile[] detailImages) {
+        // 상품 저장 로직
+        // productService.create(...);
+
+        return "redirect:/seller/inventory";
+    }
+
+    @GetMapping("/seller/inventory")
+    public String inventory(Model model,
+                            @RequestParam(defaultValue = "1") int page,
+                            @RequestParam(required = false) String search) {
+        // 실제 데이터 연동 시
+        // Page<Product> productPage = productService.getSellerProducts(sellerId, page, search);
+        // model.addAttribute("products", productPage.getContent());
+        // model.addAttribute("totalPages", productPage.getTotalPages());
+        // model.addAttribute("currentPage", page);
+        // model.addAttribute("totalProducts", productService.getSellerProductCount());
+        // model.addAttribute("inStockProducts", productService.getInStockCount());
+        // model.addAttribute("lowStockProducts", productService.getLowStockCount());
+        // model.addAttribute("outOfStockProducts", productService.getOutOfStockCount());
+
+        return "seller/inventory";
+    }
+
+    @GetMapping("/seller/products/{id}/edit")
+    public String editProduct(@PathVariable Long id, Model model) {
+        // 실제 데이터 연동 시
+        // Product product = productService.getById(id);
+        // model.addAttribute("product", product);
+
+        return "seller/product-edit";
+    }
+
+    @PostMapping("/seller/products/{id}/update")
+    public String updateProduct(@PathVariable Long id,
+                                @RequestParam String productName,
+                                @RequestParam String category,
+                                @RequestParam int originalPrice,
+                                @RequestParam int salePrice,
+                                @RequestParam int stockQty,
+                                @RequestParam(required = false) MultipartFile mainImage,
+                                @RequestParam(required = false) MultipartFile[] detailImages) {
+        // 상품 업데이트 로직
+        // productService.update(id, ...);
+
+        return "redirect:/seller/inventory";
+    }
+
+    @PostMapping("/seller/products/{id}/delete")
+    public String deleteProduct(@PathVariable Long id) {
+        // 상품 삭제 로직
+        // productService.delete(id);
+
+        return "redirect:/seller/inventory";
+    }
 }

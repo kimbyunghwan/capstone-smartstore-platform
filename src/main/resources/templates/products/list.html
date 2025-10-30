@@ -23,7 +23,7 @@
         <div class="filter-bar">
             <div class="filter-left">
                 <!-- 카테고리 필터 -->
-                <select class="filter-select" id="category-filter">
+                <select class="filter-select" id="category-filter" onchange="filterProducts()">
                     <option value="">전체 카테고리</option>
                     <option value="fashion">패션·의류</option>
                     <option value="beauty">뷰티·미용</option>
@@ -34,7 +34,7 @@
                 </select>
 
                 <!-- 가격대 필터 -->
-                <select class="filter-select" id="price-filter">
+                <select class="filter-select" id="price-filter" onchange="filterProducts()">
                     <option value="">전체 가격</option>
                     <option value="0-10000">1만원 이하</option>
                     <option value="10000-30000">1만원 ~ 3만원</option>
@@ -46,7 +46,7 @@
 
             <div class="filter-right">
                 <!-- 정렬 옵션 -->
-                <select class="filter-select" id="sort-filter">
+                <select class="filter-select" id="sort-filter" onchange="filterProducts()">
                     <option value="recent">최신순</option>
                     <option value="popular">인기순</option>
                     <option value="price-low">낮은 가격순</option>
@@ -114,23 +114,69 @@
         <!-- 페이지네이션 -->
         <div class="pagination" th:if="${totalPages > 1}">
             <a class="page-btn"
-               th:href="@{/products(page=${currentPage - 1})}"
+               th:href="@{/products(page=${currentPage - 1}, category=${category}, price=${price}, sort=${sort})}"
                th:classappend="${currentPage == 1} ? 'disabled' : ''">이전</a>
 
             <a class="page-number"
                th:each="page : ${#numbers.sequence(1, totalPages)}"
-               th:href="@{/products(page=${page})}"
+               th:href="@{/products(page=${page}, category=${category}, price=${price}, sort=${sort})}"
                th:classappend="${page == currentPage} ? 'active' : ''"
                th:text="${page}">1</a>
 
             <a class="page-btn"
-               th:href="@{/products(page=${currentPage + 1})}"
+               th:href="@{/products(page=${currentPage + 1}, category=${category}, price=${price}, sort=${sort})}"
                th:classappend="${currentPage == totalPages} ? 'disabled' : ''">다음</a>
+
         </div>
     </div>
 </section>
 
 <!-- 푸터 삽입 -->
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    // 필터 및 정렬 적용 함수
+    function filterProducts() {
+        const category = document.getElementById('category-filter').value;
+        const priceRange = document.getElementById('price-filter').value;
+        const sort = document.getElementById('sort-filter').value || 'recent';
+
+        // URL 파라미터 생성
+        let url = '/products?';
+
+        if (category) {
+            url += 'category=' + category + '&';
+        }
+        if (priceRange) {
+            url += 'price=' + priceRange + '&';
+        }
+
+        url += 'sort=' + sort;
+
+        // 페이지 이동
+        window.location.href = url;
+    }
+
+    // 페이지 로드 시 필터 상태 복원
+    window.addEventListener('load', function() {
+        const params = new URLSearchParams(window.location.search);
+        const category = params.get('category');
+        const price = params.get('price');
+        const sort = params.get('sort');
+
+        if (category) {
+            document.getElementById('category-filter').value = category;
+        }
+        if (price) {
+            document.getElementById('price-filter').value = price;
+        }
+        if (sort) {
+            document.getElementById('sort-filter').value = sort;
+        } else {
+            document.getElementById('sort-filter').value = 'recent';
+        }
+    });
+</script>
+
 </body>
 </html>

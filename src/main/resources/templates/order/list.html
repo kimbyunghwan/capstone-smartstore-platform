@@ -87,7 +87,7 @@
                             <!-- 배송 추적 (배송중일 때) -->
                             <button class="btn-action"
                                     th:if="${order.status == 'SHIPPED'}"
-                                    onclick="trackDelivery()">
+                                    th:onclick="'trackDelivery(\'' + ${order.trackingNumber} + '\', \'' + ${order.courier} + '\')'">
                                 배송조회
                             </button>
 
@@ -167,22 +167,59 @@
             this.classList.add('active');
 
             const period = this.dataset.period;
-            // TODO: 서버에 기간 필터 요청
-            console.log('필터 기간:', period + '개월');
+            // 기간으로 페이지 이동
+            window.location.href = '/orders?period=' + period;
         });
     });
 
-    // 배송 조회
-    function trackDelivery() {
-        alert('배송 조회 기능\n(택배사 API 연동 필요)');
+    // 직접 입력한 기간 조회
+    document.querySelector('.period-filter .btn-secondary')?.addEventListener('click', function() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        if (!startDate || !endDate) {
+            alert('시작일과 종료일을 모두 선택해주세요.');
+            return;
+        }
+
+        // 커스텀 기간으로 페이지 이동
+        window.location.href = '/orders?startDate=' + startDate + '&endDate=' + endDate;
+    });
+
+    // 배송 조회 (택배사 API 연동)
+    function trackDelivery(trackingNumber, courier) {
+        // 예: CJ대한통운, 우체국, 롯데택배 등
+        const trackingUrls = {
+            'cj': 'https://trace.cjlogistics.com/web/detail.jsp?slipno=',
+            'post': 'https://service.epost.go.kr/iservice/trace/real/index.jsp?POST_ID=',
+            'lotte': 'https://www.lotteglogis.com/home/reservation/tracking'
+        };
+
+        if (trackingUrls[courier]) {
+            window.open(trackingUrls[courier] + trackingNumber, '_blank');
+        } else {
+            alert('배송 추적이 불가능합니다.');
+        }
     }
 
     // 구매 확정
     function confirmOrder(orderId) {
         if (confirm('구매를 확정하시겠습니까?\n확정 후에는 취소할 수 없습니다.')) {
-            // TODO: 서버에 구매확정 요청
-            alert('구매가 확정되었습니다.');
-            location.reload();
+            fetch(`/orders/${orderId}/confirm`, {
+                method: 'POST'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert('구매가 확정되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('오류가 발생했습니다.');
+                    }
+                })
+                .catch(error => {
+                    alert('요청 중 오류가 발생했습니다.');
+                    console.error('Error:', error);
+                });
         }
     }
 
@@ -198,9 +235,25 @@
         const reason = prompt('취소 사유를 입력해주세요:');
         if (reason) {
             if (confirm('주문을 취소하시겠습니까?')) {
-                // TODO: 서버에 주문취소 요청
-                alert('주문이 취소되었습니다.');
-                location.reload();
+                fetch(`/orders/${orderId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason: reason })
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('주문이 취소되었습니다.');
+                            location.reload();
+                        } else {
+                            alert('오류가 발생했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        alert('요청 중 오류가 발생했습니다.');
+                        console.error('Error:', error);
+                    });
             }
         }
     }

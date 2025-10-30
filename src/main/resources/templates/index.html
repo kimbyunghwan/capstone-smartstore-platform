@@ -25,7 +25,23 @@
     <div class="container">
         <h2 class="section-title">오늘만 특가</h2>
         <div class="product-grid">
-            <div class="product-card placeholder" th:each="i : ${#numbers.sequence(1,8)}">
+            <!-- 실제 데이터가 있을 때 -->
+            <a th:each="product : ${specialProducts}"
+               th:href="@{/products/{id}(id=${product.productId})}"
+               class="product-card">
+                <div class="product-image">
+                    <img th:src="@{${product.imageUrl}}" th:alt="${product.name}" />
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name" th:text="${product.name}">상품명</h3>
+                    <div class="product-price">
+                        <span class="price" th:text="${#numbers.formatInteger(product.salePrice, 0, 'COMMA')} + '원'">0원</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- 데이터가 없을 때 (더미) -->
+            <div class="product-card placeholder" th:if="${specialProducts == null or specialProducts.isEmpty()}" th:each="i : ${#numbers.sequence(1,8)}">
                 <div class="product-image"></div>
                 <div class="product-info">
                     <h3 class="product-name">상품 준비중</h3>
@@ -41,7 +57,23 @@
     <div class="container">
         <h2 class="section-title">베스트 상품</h2>
         <div class="product-grid">
-            <div class="product-card placeholder" th:each="i : ${#numbers.sequence(1,8)}">
+            <!-- 실제 데이터가 있을 때 -->
+            <a th:each="product : ${bestProducts}"
+               th:href="@{/products/{id}(id=${product.productId})}"
+               class="product-card">
+                <div class="product-image">
+                    <img th:src="@{${product.imageUrl}}" th:alt="${product.name}" />
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name" th:text="${product.name}">상품명</h3>
+                    <div class="product-price">
+                        <span class="price" th:text="${#numbers.formatInteger(product.salePrice, 0, 'COMMA')} + '원'">0원</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- 데이터가 없을 때 (더미) -->
+            <div class="product-card placeholder" th:if="${bestProducts == null or bestProducts.isEmpty()}" th:each="i : ${#numbers.sequence(1,8)}">
                 <div class="product-image"></div>
                 <div class="product-info">
                     <h3 class="product-name">상품 준비중</h3>
@@ -57,7 +89,23 @@
     <div class="container">
         <h2 class="section-title">신상품</h2>
         <div class="product-grid">
-            <div class="product-card placeholder" th:each="i : ${#numbers.sequence(1,8)}">
+            <!-- 실제 데이터가 있을 때 -->
+            <a th:each="product : ${newProducts}"
+               th:href="@{/products/{id}(id=${product.productId})}"
+               class="product-card">
+                <div class="product-image">
+                    <img th:src="@{${product.imageUrl}}" th:alt="${product.name}" />
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name" th:text="${product.name}">상품명</h3>
+                    <div class="product-price">
+                        <span class="price" th:text="${#numbers.formatInteger(product.salePrice, 0, 'COMMA')} + '원'">0원</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- 데이터가 없을 때 (더미) -->
+            <div class="product-card placeholder" th:if="${newProducts == null or newProducts.isEmpty()}" th:each="i : ${#numbers.sequence(1,8)}">
                 <div class="product-image"></div>
                 <div class="product-info">
                     <h3 class="product-name">상품 준비중</h3>
@@ -67,6 +115,7 @@
         </div>
     </div>
 </section>
+
 
 <!-- 푸터 삽입 -->
 <div th:replace="~{fragments/footer :: footer}"></div>
