@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트스토어 - 판매자 대시보드</title>
+    <link th:href="@{/css/store.css}" rel="stylesheet" />
+</head>
+<body>
+<!-- 헤더 삽입 -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- 판매자 대시보드 -->
+<section class="seller-dashboard-section">
+    <div class="container">
+        <!-- 페이지 타이틀 -->
+        <div class="page-header">
+            <h2 class="page-title">판매자 대시보드</h2>
+            <p class="page-description">판매 현황을 한눈에 확인하세요</p>
+        </div>
+
+        <!-- 통계 카드 영역 -->
+        <div class="stats-grid">
+            <!-- 오늘 매출 -->
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">오늘 매출</span>
+                    <span class="stat-icon">💰</span>
+                </div>
+                <div class="stat-value" th:text="${todayRevenue ?: 0} + '원'">0원</div>
+                <div class="stat-meta">
+                    <span class="compare up">↑ 12% 증가</span>
+                </div>
+            </div>
+
+            <!-- 이번 달 매출 -->
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">이번 달 매출</span>
+                    <span class="stat-icon">📈</span>
+                </div>
+                <div class="stat-value" th:text="${monthRevenue ?: 0} + '원'">0원</div>
+                <div class="stat-meta">
+                    <span class="compare up">↑ 8% 증가</span>
+                </div>
+            </div>
+
+            <!-- 대기 중인 주문 -->
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">대기 중인 주문</span>
+                    <span class="stat-icon">📦</span>
+                </div>
+                <div class="stat-value" th:text="${pendingOrders ?: 0}">0</div>
+                <div class="stat-meta">
+                    <a href="/seller/orders?status=PAYMENT_WAIT" class="link">확인하기 →</a>
+                </div>
+            </div>
+
+            <!-- 등록 상품 수 -->
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">등록 상품 수</span>
+                    <span class="stat-icon">📷</span>
+                </div>
+                <div class="stat-value" th:text="${totalProducts ?: 0}">0</div>
+                <div class="stat-meta">
+                    <a href="/seller/inventory" class="link">관리하기 →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 콘텐츠 영역 -->
+        <div class="dashboard-content">
+            <!-- 좌측: 최근 주문 -->
+            <div class="dashboard-left">
+                <!-- 최근 주문 -->
+                <div class="dashboard-box">
+                    <div class="box-header">
+                        <h3 class="box-title">최근 주문</h3>
+                        <a href="/seller/orders" class="link-more">더보기 →</a>
+                    </div>
+
+                    <div class="orders-list">
+                        <div class="order-row" th:each="order : ${recentOrders}">
+                            <div class="order-info">
+                                <div class="order-number" th:text="${order.orderId}">ORD-202410-001</div>
+                                <div class="order-time" th:text="${#temporals.format(order.createdAt, 'MM.dd HH:mm')}">10.20 14:30</div>
+                            </div>
+                            <div class="order-customer" th:text="${order.customerName}">고객명</div>
+                            <div class="order-amount" th:text="${#numbers.formatInteger(order.orderTotal, 0, 'COMMA')} + '원'">29,900원</div>
+                            <div class="order-status">
+                                    <span class="status-badge"
+                                          th:classappend="${order.status == 'PAID'} ? 'paid' : (${order.status == 'SHIPPED'} ? 'shipped' : '')"
+                                          th:text="${order.status == 'PAID'} ? '결제완료' : (${order.status == 'SHIPPED'} ? '배송중' : '대기')">
+                                        대기
+                                    </span>
+                            </div>
+                        </div>
+
+                        <!-- 주문이 없을 때 -->
+                        <div class="empty-message" th:if="${recentOrders == null or recentOrders.isEmpty()}">
+                            <p>최근 주문이 없습니다</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 판매 그래프 (간단 버전) -->
+                <div class="dashboard-box">
+                    <div class="box-header">
+                        <h3 class="box-title">최근 7일 판매현황</h3>
+                    </div>
+                    <div class="chart-placeholder">
+                        <div class="chart-bar-group">
+                            <div class="chart-bar" style="height: 40%;"></div>
+                            <div class="chart-bar" style="height: 60%;"></div>
+                            <div class="chart-bar" style="height: 45%;"></div>
+                            <div class="chart-bar" style="height: 75%;"></div>
+                            <div class="chart-bar" style="height: 55%;"></div>
+                            <div class="chart-bar" style="height: 80%;"></div>
+                            <div class="chart-bar" style="height: 65%;"></div>
+                        </div>
+                        <p class="chart-note">차트 표시 (나중에 Chart.js 연동)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 우측: 빠른 메뉴 & 공지사항 -->
+            <div class="dashboard-right">
+                <!-- 빠른 메뉴 -->
+                <div class="dashboard-box">
+                    <div class="box-header">
+                        <h3 class="box-title">빠른 메뉴</h3>
+                    </div>
+                    <div class="quick-menu">
+                        <a href="/seller/product-new" class="menu-item">
+                            <span class="menu-icon">➕</span>
+                            <span class="menu-text">상품 등록</span>
+                        </a>
+                        <a href="/seller/inventory" class="menu-item">
+                            <span class="menu-icon">📦</span>
+                            <span class="menu-text">재고 관리</span>
+                        </a>
+                        <a href="/seller/orders" class="menu-item">
+                            <span class="menu-icon">📋</span>
+                            <span class="menu-text">주문 관리</span>
+                        </a>
+                        <a href="/seller/reviews" class="menu-item">
+                            <span class="menu-icon">⭐</span>
+                            <span class="menu-text">리뷰 관리</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 공지사항 -->
+                <div class="dashboard-box">
+                    <div class="box-header">
+                        <h3 class="box-title">공지사항</h3>
+                    </div>
+                    <div class="notice-list">
+                        <div class="notice-item">
+                            <span class="notice-category">공지</span>
+                            <a href="#" class="notice-title">2024년 10월 판매수수료 정책 안내</a>
+                            <span class="notice-date">10.25</span>
+                        </div>
+                        <div class="notice-item">
+                            <span class="notice-category">이벤트</span>
+                            <a href="#" class="notice-title">판매자 성장 프로그램 신청 안내</a>
+                            <span class="notice-date">10.20</span>
+                        </div>
+                        <div class="notice-item">
+                            <span class="notice-category">공지</span>
+                            <a href="#" class="notice-title">시스템 점검 공지</a>
+                            <span class="notice-date">10.15</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 인기 상품 -->
+                <div class="dashboard-box">
+                    <div class="box-header">
+                        <h3 class="box-title">인기 상품 TOP 3</h3>
+                    </div>
+                    <div class="top-products">
+                        <div class="top-product-item" th:each="product, stat : ${topProducts}">
+                            <span class="rank" th:text="${stat.count}">1</span>
+                            <div class="product-info">
+                                <p class="product-name" th:text="${product.name}">상품명</p>
+                                <p class="product-sales">
+                                    판매량: <strong th:text="${product.salesCount}">0</strong>개
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 푸터 삽입 -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

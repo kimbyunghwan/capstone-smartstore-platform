@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트스토어 - 주문/결제</title>
+    <link th:href="@{/css/store.css}" rel="stylesheet" />
+</head>
+<body>
+<!-- 헤더 삽입 -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- 주문/결제 -->
+<section class="order-section">
+    <div class="container">
+        <!-- 페이지 타이틀 -->
+        <div class="page-header">
+            <h2 class="page-title">주문/결제</h2>
+        </div>
+
+        <!-- 주문 콘텐츠 -->
+        <div class="order-content">
+            <!-- 주문 폼 -->
+            <div class="order-main">
+                <form id="order-form" method="post" action="/order/create">
+                    <!-- 주문 상품 정보 -->
+                    <div class="order-section-box">
+                        <h3 class="section-title">주문상품</h3>
+                        <div class="order-items">
+                            <div class="order-item" th:each="item : ${orderItems}">
+                                <div class="item-image">
+                                    <img th:src="@{${item.imageUrl}}" th:alt="${item.productName}" />
+                                </div>
+                                <div class="item-details">
+                                    <p class="item-name" th:text="${item.productName}">상품명</p>
+                                    <p class="item-option" th:if="${item.optionName}" th:text="'옵션: ' + ${item.optionName}">옵션: 블랙</p>
+                                    <p class="item-quantity">수량: <span th:text="${item.qty}">1</span>개</p>
+                                </div>
+                                <div class="item-price">
+                                    <strong th:text="${#numbers.formatInteger(item.unitPrice * item.qty, 0, 'COMMA')} + '원'">29,900원</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 주문자 정보 -->
+                    <div class="order-section-box">
+                        <h3 class="section-title">주문자 정보</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>이름 <span class="required">*</span></label>
+                                <input type="text" name="ordererName" th:value="${member?.name}" required />
+                            </div>
+                            <div class="form-group">
+                                <label>연락처 <span class="required">*</span></label>
+                                <input type="tel" name="ordererPhone" th:value="${member?.phone}" placeholder="010-0000-0000" required />
+                            </div>
+                            <div class="form-group full-width">
+                                <label>이메일 <span class="required">*</span></label>
+                                <input type="email" name="ordererEmail" th:value="${member?.email}" placeholder="example@email.com" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 배송지 정보 -->
+                    <div class="order-section-box">
+                        <div class="section-header">
+                            <h3 class="section-title">배송지 정보</h3>
+                            <button type="button" class="btn-text" id="sameAsOrderer">주문자 정보와 동일</button>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>수령인 <span class="required">*</span></label>
+                                <input type="text" name="receiverName" id="receiverName" required />
+                            </div>
+                            <div class="form-group">
+                                <label>연락처 <span class="required">*</span></label>
+                                <input type="tel" name="receiverPhone" id="receiverPhone" placeholder="010-0000-0000" required />
+                            </div>
+                            <div class="form-group full-width">
+                                <label>주소 <span class="required">*</span></label>
+                                <div class="address-input-group">
+                                    <input type="text" name="zipcode" id="zipcode" placeholder="우편번호" readonly required />
+                                    <button type="button" class="btn btn-secondary" onclick="searchAddress()">주소 검색</button>
+                                </div>
+                                <input type="text" name="address1" id="address1" placeholder="기본 주소" readonly required />
+                                <input type="text" name="address2" id="address2" placeholder="상세 주소" />
+                            </div>
+                            <div class="form-group full-width">
+                                <label>배송 메모</label>
+                                <select name="deliveryMemo" class="delivery-memo-select">
+                                    <option value="">배송 메모를 선택하세요</option>
+                                    <option value="부재시 문앞에 놓아주세요">부재시 문앞에 놓아주세요</option>
+                                    <option value="부재시 경비실에 맡겨주세요">부재시 경비실에 맡겨주세요</option>
+                                    <option value="배송 전 연락 부탁드립니다">배송 전 연락 부탁드립니다</option>
+                                    <option value="direct">직접 입력</option>
+                                </select>
+                                <input type="text" name="deliveryMemoText" id="deliveryMemoText" class="memo-direct-input" placeholder="배송 메모를 입력하세요" style="display:none;" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 결제 수단 -->
+                    <div class="order-section-box">
+                        <h3 class="section-title">결제 수단</h3>
+                        <div class="payment-methods">
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="card" checked />
+                                <span>신용/체크카드</span>
+                            </label>
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="transfer" />
+                                <span>계좌이체</span>
+                            </label>
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="vbank" />
+                                <span>무통장입금</span>
+                            </label>
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="phone" />
+                                <span>휴대폰결제</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 약관 동의 -->
+                    <div class="order-section-box">
+                        <div class="agreement-area">
+                            <label class="agreement-item">
+                                <input type="checkbox" id="agreeAll" />
+                                <strong>전체 동의</strong>
+                            </label>
+                            <div class="agreement-divider"></div>
+                            <label class="agreement-item">
+                                <input type="checkbox" name="agreement" class="agreement-check" required />
+                                <span>구매조건 확인 및 결제대행 서비스 약관 동의 <span class="required">(필수)</span></span>
+                            </label>
+                            <label class="agreement-item">
+                                <input type="checkbox" name="agreement" class="agreement-check" required />
+                                <span>개인정보 수집 및 이용 동의 <span class="required">(필수)</span></span>
+                            </label>
+                            <label class="agreement-item">
+                                <input type="checkbox" name="agreement" class="agreement-check" required />
+                                <span>개인정보 제3자 제공 동의 <span class="required">(필수)</span></span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 결제 정보 요약 -->
+            <div class="order-summary">
+                <h3 class="summary-title">결제 정보</h3>
+
+                <div class="summary-item">
+                    <span>총 상품금액</span>
+                    <span id="product-total" th:text="${#numbers.formatInteger(totalPrice ?: 0, 0, 'COMMA')} + '원'">0원</span>
+                </div>
+
+                <div class="summary-item">
+                    <span>배송비</span>
+                    <span id="delivery-fee">무료</span>
+                </div>
+
+                <div class="summary-item discount">
+                    <span>할인금액</span>
+                    <span id="discount-amount">- 0원</span>
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="summary-total">
+                    <span>최종 결제금액</span>
+                    <strong id="final-amount" th:text="${#numbers.formatInteger(totalPrice ?: 0, 0, 'COMMA')} + '원'">0원</strong>
+                </div>
+
+                <button type="button" class="btn btn-payment" onclick="submitOrder()">
+                    <span th:text="${#numbers.formatInteger(totalPrice ?: 0, 0, 'COMMA')} + '원'">0원</span> 결제하기
+                </button>
+
+                <div class="payment-info">
+                    <p>• 주문 내용을 확인하였으며, 약관에 동의합니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 푸터 삽입 -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    // 주문자 정보와 동일
+    document.getElementById('sameAsOrderer')?.addEventListener('click', function() {
+        const ordererName = document.querySelector('input[name="ordererName"]').value;
+        const ordererPhone = document.querySelector('input[name="ordererPhone"]').value;
+
+        document.getElementById('receiverName').value = ordererName;
+        document.getElementById('receiverPhone').value = ordererPhone;
+    });
+
+    // 배송 메모 직접 입력
+    document.querySelector('.delivery-memo-select')?.addEventListener('change', function() {
+        const directInput = document.getElementById('deliveryMemoText');
+        if (this.value === 'direct') {
+            directInput.style.display = 'block';
+            directInput.required = true;
+        } else {
+            directInput.style.display = 'none';
+            directInput.required = false;
+        }
+    });
+
+    // 전체 동의
+    document.getElementById('agreeAll')?.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.agreement-check');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+
+    // 개별 체크박스 변경 시 전체 동의 상태 업데이트
+    document.querySelectorAll('.agreement-check').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const allChecked = Array.from(document.querySelectorAll('.agreement-check'))
+                .every(cb => cb.checked);
+            document.getElementById('agreeAll').checked = allChecked;
+        });
+    });
+
+    // 주소 검색 (실제로는 Daum 주소 API 등 사용)
+    function searchAddress() {
+        alert('주소 검색 API 연동 필요\n(예: Daum 주소 API)');
+        // 예시 데이터
+        document.getElementById('zipcode').value = '06236';
+        document.getElementById('address1').value = '서울특별시 강남구 테헤란로 123';
+    }
+
+    // 주문 제출
+    function submitOrder() {
+        const form = document.getElementById('order-form');
+
+        // 필수 약관 동의 확인
+        const agreements = document.querySelectorAll('.agreement-check');
+        const allAgreed = Array.from(agreements).every(cb => cb.checked);
+
+        if (!allAgreed) {
+            alert('필수 약관에 모두 동의해주세요.');
+            return;
+        }
+
+        if (form.checkValidity()) {
+            // 실제로는 결제 API 연동
+            if (confirm('주문을 진행하시겠습니까?')) {
+                form.submit();
+            }
+        } else {
+            form.reportValidity();
+        }
+    }
+</script>
+</body>
+</html>

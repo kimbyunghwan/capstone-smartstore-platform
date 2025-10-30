@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트스토어 - 상품 수정</title>
+    <link th:href="@{/css/store.css}" rel="stylesheet" />
+</head>
+<body>
+<!-- 헤더 삽입 -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- 상품 수정 -->
+<section class="seller-product-section">
+    <div class="container">
+        <!-- 페이지 타이틀 -->
+        <div class="page-header">
+            <h2 class="page-title">상품 수정</h2>
+            <p class="page-description">상품 정보를 수정하세요</p>
+        </div>
+
+        <!-- 상품 수정 폼 -->
+        <form id="product-form" method="post" th:action="@{/seller/products/{id}/update(id=${product?.productId})}" enctype="multipart/form-data">
+
+            <input type="hidden" name="productId" th:value="${product?.productId}" />
+
+            <!-- 기본 정보 섹션 -->
+            <div class="form-section-box">
+                <h3 class="section-title">기본 정보</h3>
+
+                <div class="form-group">
+                    <label>상품명 <span class="required">*</span></label>
+                    <input type="text" name="productName" th:value="${product?.name}" placeholder="상품명을 입력하세요" maxlength="100" required />
+                    <span class="char-count"><span id="name-count" th:text="${product?.name?.length() ?: 0}">0</span>/100</span>
+                </div>
+
+                <div class="form-group">
+                    <label>카테고리 <span class="required">*</span></label>
+                    <select name="category" required>
+                        <option value="">선택하세요</option>
+                        <option value="fashion" th:selected="${product?.category == 'fashion'}">패션·의류</option>
+                        <option value="beauty" th:selected="${product?.category == 'beauty'}">뷰티·미용</option>
+                        <option value="food" th:selected="${product?.category == 'food'}">식품·건강</option>
+                        <option value="digital" th:selected="${product?.category == 'digital'}">디지털·가전</option>
+                        <option value="sports" th:selected="${product?.category == 'sports'}">스포츠·레저</option>
+                        <option value="home" th:selected="${product?.category == 'home'}">홈·리빙</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>정가 <span class="required">*</span></label>
+                        <input type="number" name="originalPrice" th:value="${product?.originalPrice}" placeholder="0" min="0" required />
+                        <span class="unit">원</span>
+                    </div>
+                    <div class="form-group">
+                        <label>판매가 <span class="required">*</span></label>
+                        <input type="number" name="salePrice" th:value="${product?.salePrice}" placeholder="0" min="0" required />
+                        <span class="unit">원</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>할인율</label>
+                    <input type="number" name="discountRate" th:value="${product?.discountRate}" placeholder="0" min="0" max="100" />
+                    <span class="unit">%</span>
+                </div>
+            </div>
+
+            <!-- 상품 설명 섹션 -->
+            <div class="form-section-box">
+                <h3 class="section-title">상품 설명</h3>
+
+                <div class="form-group">
+                    <label>짧은 설명</label>
+                    <input type="text" name="shortDescription" th:value="${product?.shortDescription}" placeholder="상품을 한 줄로 설명해주세요" maxlength="200" />
+                    <span class="char-count"><span id="short-count" th:text="${product?.shortDescription?.length() ?: 0}">0</span>/200</span>
+                </div>
+
+                <div class="form-group">
+                    <label>상세 설명 <span class="required">*</span></label>
+                    <textarea name="description" rows="12" required th:text="${product?.description}"></textarea>
+                </div>
+            </div>
+
+            <!-- 이미지 섹션 -->
+            <div class="form-section-box">
+                <h3 class="section-title">상품 이미지</h3>
+
+                <div class="form-group">
+                    <label>메인 이미지</label>
+                    <div class="image-edit-area">
+                        <div class="current-image" th:if="${product?.imageUrl}">
+                            <p class="label-small">현재 이미지</p>
+                            <img th:src="@{${product?.imageUrl}}" alt="메인 이미지" />
+                        </div>
+                        <div class="image-upload">
+                            <input type="file" id="main-image" name="mainImage" accept="image/*" style="display: none;" />
+                            <label for="main-image" class="image-upload-btn">
+                                <span class="upload-icon">📷</span>
+                                <span>새 이미지 선택</span>
+                            </label>
+                            <div class="image-preview" id="main-preview"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>상세 이미지</label>
+                    <div class="image-edit-area">
+                        <div class="current-images" th:if="${product?.detailImages}">
+                            <p class="label-small">현재 이미지</p>
+                            <div class="detail-images-grid">
+                                <img th:each="img : ${product?.detailImages}" th:src="@{${img}}" alt="상세 이미지" />
+                            </div>
+                        </div>
+                        <div class="image-upload">
+                            <input type="file" id="detail-images" name="detailImages" multiple accept="image/*" style="display: none;" />
+                            <label for="detail-images" class="image-upload-btn">
+                                <span class="upload-icon">📸</span>
+                                <span>상세 이미지 선택 (최대 5장)</span>
+                            </label>
+                            <div class="detail-preview" id="detail-preview"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 재고 섹션 -->
+            <div class="form-section-box">
+                <h3 class="section-title">재고 정보</h3>
+
+                <div class="form-group">
+                    <label>재고 수량 <span class="required">*</span></label>
+                    <input type="number" name="stockQty" th:value="${product?.stockQty}" placeholder="0" min="0" required />
+                </div>
+
+                <div class="form-group">
+                    <label>옵션 설정</label>
+                    <div class="option-settings">
+                        <div class="option-item">
+                            <input type="text" name="option1Name" th:value="${product?.option1Name}" placeholder="옵션명 (예: 색상)" />
+                            <textarea name="option1Values" placeholder="옵션값 (쉼표로 구분)" rows="3" th:text="${product?.option1Values}"></textarea>
+                        </div>
+                        <div class="option-item">
+                            <input type="text" name="option2Name" th:value="${product?.option2Name}" placeholder="옵션명 (예: 사이즈)" />
+                            <textarea name="option2Values" placeholder="옵션값 (쉼표로 구분)" rows="3" th:text="${product?.option2Values}"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 배송 섹션 -->
+            <div class="form-section-box">
+                <h3 class="section-title">배송 정보</h3>
+
+                <div class="form-group">
+                    <label>배송비</label>
+                    <div class="delivery-options">
+                        <label class="radio-label">
+                            <input type="radio" name="deliveryType" value="free" th:checked="${product?.deliveryType == 'free'}" />
+                            <span>무료</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="deliveryType" value="paid" th:checked="${product?.deliveryType == 'paid'}" />
+                            <span>유료</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="delivery-fee-group" th:style="${product?.deliveryType == 'paid'} ? '' : 'display: none;'">
+                    <label>배송비 금액</label>
+                    <input type="number" name="deliveryFee" th:value="${product?.deliveryFee}" placeholder="0" min="0" />
+                    <span class="unit">원</span>
+                </div>
+
+                <div class="form-group">
+                    <label>배송 설명</label>
+                    <input type="text" name="deliveryDescription" th:value="${product?.deliveryDescription}" placeholder="예: 당일 배송, 2-3일 배송" />
+                </div>
+            </div>
+
+            <!-- 상품 상태 -->
+            <div class="form-section-box">
+                <h3 class="section-title">상품 상태</h3>
+
+                <div class="status-info">
+                    <div class="info-row">
+                        <span class="label">등록일</span>
+                        <span class="value" th:text="${#temporals.format(product?.createdAt, 'yyyy.MM.dd HH:mm')}">2024.10.20 14:30</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">수정일</span>
+                        <span class="value" th:text="${#temporals.format(product?.updatedAt, 'yyyy.MM.dd HH:mm')}">2024.10.25 10:15</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">판매 상태</span>
+                        <span class="value">
+                                <input type="checkbox" name="isActive" id="is-active" th:checked="${product?.isActive}" />
+                                <label for="is-active">판매중</label>
+                            </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 버튼 -->
+            <div style="display: flex; justify-content: space-between; gap: 12px; margin-top: 40px;">
+                <button type="button" class="btn btn-cancel" onclick="history.back()" style="padding: 16px 24px; background: white; border: 1px solid #e5e7eb; color: #666; font-size: 16px; font-weight: 600; border-radius: 8px; cursor: pointer;">취소</button>
+
+                <div style="display: flex; gap: 12px;">
+                    <button type="button" class="btn" onclick="deleteProduct()" style="padding: 16px 24px; background: white; border: 1px solid #dc2626; color: #dc2626; font-size: 16px; font-weight: 600; border-radius: 8px; cursor: pointer;">상품 삭제</button>
+                    <button type="submit" class="btn btn-submit" style="padding: 16px 48px; background: #2563EB; border: none; color: white; font-size: 16px; font-weight: 600; border-radius: 8px; cursor: pointer;">수정 완료</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</section>
+
+<!-- 푸터 삽입 -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    // 글자수 카운팅
+    document.querySelector('input[name="productName"]').addEventListener('input', function() {
+        document.getElementById('name-count').textContent = this.value.length;
+    });
+
+    document.querySelector('input[name="shortDescription"]').addEventListener('input', function() {
+        document.getElementById('short-count').textContent = this.value.length;
+    });
+
+    // 배송 유료/무료 선택
+    document.querySelectorAll('input[name="deliveryType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const feeGroup = document.getElementById('delivery-fee-group');
+            feeGroup.style.display = this.value === 'paid' ? 'block' : 'none';
+        });
+    });
+
+    // 메인 이미지 미리보기
+    document.getElementById('main-image').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const preview = document.getElementById('main-preview');
+                preview.innerHTML = `<img src="${event.target.result}" alt="메인 이미지 미리보기" />`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // 상세 이미지 미리보기
+    document.getElementById('detail-images').addEventListener('change', function(e) {
+        const preview = document.getElementById('detail-preview');
+        preview.innerHTML = '';
+
+        Array.from(e.target.files).slice(0, 5).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.alt = '상세 이미지';
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    // 상품 삭제
+    function deleteProduct() {
+        if (confirm('정말 이 상품을 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.')) {
+            if (confirm('삭제를 다시 한 번 확인해주세요.')) {
+                // TODO: 서버에 삭제 요청
+                alert('상품이 삭제되었습니다.');
+                location.href = '/seller/inventory';
+            }
+        }
+    }
+</script>
+</body>
+</html>

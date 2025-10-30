@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트스토어 - 상품목록</title>
+    <link th:href="@{/css/store.css}" rel="stylesheet" />
+</head>
+<body>
+<!-- 헤더 삽입 -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- 상품 목록 -->
+<section class="product-list-section">
+    <div class="container">
+        <!-- 페이지 타이틀 -->
+        <div class="page-header">
+            <h2 class="page-title">전체 상품</h2>
+            <p class="page-description">다양한 상품을 만나보세요</p>
+        </div>
+
+        <!-- 필터 & 정렬 영역 -->
+        <div class="filter-bar">
+            <div class="filter-left">
+                <!-- 카테고리 필터 -->
+                <select class="filter-select" id="category-filter" onchange="filterProducts()">
+                    <option value="">전체 카테고리</option>
+                    <option value="fashion">패션·의류</option>
+                    <option value="beauty">뷰티·미용</option>
+                    <option value="food">식품·건강</option>
+                    <option value="digital">디지털·가전</option>
+                    <option value="sports">스포츠·레저</option>
+                    <option value="home">홈·리빙</option>
+                </select>
+
+                <!-- 가격대 필터 -->
+                <select class="filter-select" id="price-filter" onchange="filterProducts()">
+                    <option value="">전체 가격</option>
+                    <option value="0-10000">1만원 이하</option>
+                    <option value="10000-30000">1만원 ~ 3만원</option>
+                    <option value="30000-50000">3만원 ~ 5만원</option>
+                    <option value="50000-100000">5만원 ~ 10만원</option>
+                    <option value="100000">10만원 이상</option>
+                </select>
+            </div>
+
+            <div class="filter-right">
+                <!-- 정렬 옵션 -->
+                <select class="filter-select" id="sort-filter" onchange="filterProducts()">
+                    <option value="recent">최신순</option>
+                    <option value="popular">인기순</option>
+                    <option value="price-low">낮은 가격순</option>
+                    <option value="price-high">높은 가격순</option>
+                    <option value="review">리뷰 많은 순</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 검색 결과 카운트 -->
+        <div class="result-info">
+            <p>총 <strong th:text="${totalProducts ?: 0}">0</strong>개의 상품</p>
+        </div>
+
+        <!-- 상품 그리드 -->
+        <div class="product-grid">
+            <!-- 실제 상품 데이터 -->
+            <div class="product-card"
+                 th:each="product : ${products}"
+                 th:if="${products != null and !products.isEmpty()}">
+                <a th:href="@{/products/{id}(id=${product.productId})}" class="product-link">
+                    <div class="product-image">
+                        <img th:src="@{${product.imageUrl}}"
+                             th:alt="${product.name}" />
+                        <!-- 뱃지 표시 -->
+                        <span class="badge" th:if="${product.isNew}">NEW</span>
+                        <span class="badge best" th:if="${product.isBest}">BEST</span>
+                        <span class="badge sale" th:if="${product.discountRate != null}">특가</span>
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name" th:text="${product.name}">상품명</h3>
+                        <div class="product-price">
+                                <span class="discount-rate"
+                                      th:if="${product.discountRate != null}"
+                                      th:text="${product.discountRate} + '%'">20%</span>
+                            <span class="price" th:text="${#numbers.formatInteger(product.price, 0, 'COMMA')} + '원'">29,900원</span>
+                        </div>
+                        <div class="original-price"
+                             th:if="${product.originalPrice != null}"
+                             th:text="${#numbers.formatInteger(product.originalPrice, 0, 'COMMA')} + '원'">35,000원</div>
+                        <div class="product-meta">
+                            <span class="store-name" th:text="${product.storeName}">상점명</span>
+                            <span class="review-count">
+                                    <span class="star">★</span>
+                                    <span th:text="${product.rating ?: 0}">0</span>
+                                    (<span th:text="${product.reviewCount ?: 0}">0</span>)
+                                </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 플레이스홀더 (데이터 없을 때) -->
+            <div class="product-card placeholder"
+                 th:each="i : ${#numbers.sequence(1,12)}"
+                 th:if="${products == null or products.isEmpty()}">
+                <div class="product-image"></div>
+                <div class="product-info">
+                    <h3 class="product-name">상품 준비중</h3>
+                    <div class="product-price"><span class="price">0원</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div class="pagination" th:if="${totalPages > 1}">
+            <a class="page-btn"
+               th:href="@{/products(page=${currentPage - 1}, category=${category}, price=${price}, sort=${sort})}"
+               th:classappend="${currentPage == 1} ? 'disabled' : ''">이전</a>
+
+            <a class="page-number"
+               th:each="page : ${#numbers.sequence(1, totalPages)}"
+               th:href="@{/products(page=${page}, category=${category}, price=${price}, sort=${sort})}"
+               th:classappend="${page == currentPage} ? 'active' : ''"
+               th:text="${page}">1</a>
+
+            <a class="page-btn"
+               th:href="@{/products(page=${currentPage + 1}, category=${category}, price=${price}, sort=${sort})}"
+               th:classappend="${currentPage == totalPages} ? 'disabled' : ''">다음</a>
+
+        </div>
+    </div>
+</section>
+
+<!-- 푸터 삽입 -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    // 필터 및 정렬 적용 함수
+    function filterProducts() {
+        const category = document.getElementById('category-filter').value;
+        const priceRange = document.getElementById('price-filter').value;
+        const sort = document.getElementById('sort-filter').value || 'recent';
+
+        // URL 파라미터 생성
+        let url = '/products?';
+
+        if (category) {
+            url += 'category=' + category + '&';
+        }
+        if (priceRange) {
+            url += 'price=' + priceRange + '&';
+        }
+
+        url += 'sort=' + sort;
+
+        // 페이지 이동
+        window.location.href = url;
+    }
+
+    // 페이지 로드 시 필터 상태 복원
+    window.addEventListener('load', function() {
+        const params = new URLSearchParams(window.location.search);
+        const category = params.get('category');
+        const price = params.get('price');
+        const sort = params.get('sort');
+
+        if (category) {
+            document.getElementById('category-filter').value = category;
+        }
+        if (price) {
+            document.getElementById('price-filter').value = price;
+        }
+        if (sort) {
+            document.getElementById('sort-filter').value = sort;
+        } else {
+            document.getElementById('sort-filter').value = 'recent';
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트스토어 - 상품 등록</title>
+    <link th:href="@{/css/store.css}" rel="stylesheet" />
+</head>
+<body>
+<!-- 헤더 삽입 -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- 상품 등록 -->
+<section class="seller-product-section">
+    <div class="container">
+        <!-- 페이지 타이틀 -->
+        <div class="page-header">
+            <h2 class="page-title">상품 등록</h2>
+            <p class="page-description">새로운 상품을 등록하세요</p>
+        </div>
+
+        <!-- 상품 등록 폼 -->
+        <form id="product-form" method="post" th:action="@{/seller/products/create}" enctype="multipart/form-data">
+
+            <!-- 기본 정보 섹션 -->
+            <div class="form-section-box">
+                <h3 class="section-title">기본 정보</h3>
+
+                <div class="form-group">
+                    <label>상품명 <span class="required">*</span></label>
+                    <input type="text" name="productName" placeholder="상품명을 입력하세요 (최대 100자)" maxlength="100" required />
+                    <span class="char-count"><span id="name-count">0</span>/100</span>
+                </div>
+
+                <div class="form-group">
+                    <label>카테고리 <span class="required">*</span></label>
+                    <select name="category" required>
+                        <option value="">선택하세요</option>
+                        <option value="fashion">패션·의류</option>
+                        <option value="beauty">뷰티·미용</option>
+                        <option value="food">식품·건강</option>
+                        <option value="digital">디지털·가전</option>
+                        <option value="sports">스포츠·레저</option>
+                        <option value="home">홈·리빙</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>정가 <span class="required">*</span></label>
+                        <input type="number" name="originalPrice" placeholder="0" min="0" required />
+                        <span class="unit">원</span>
+                    </div>
+                    <div class="form-group">
+                        <label>판매가 <span class="required">*</span></label>
+                        <input type="number" name="salePrice" placeholder="0" min="0" required />
+                        <span class="unit">원</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>할인율</label>
+                    <input type="number" name="discountRate" placeholder="0" min="0" max="100" />
+                    <span class="unit">%</span>
+                </div>
+            </div>
+
+            <!-- 상품 설명 섹션 -->
+            <div class="form-section-box">
+                <h3 class="section-title">상품 설명</h3>
+
+                <div class="form-group">
+                    <label>짧은 설명</label>
+                    <input type="text" name="shortDescription" placeholder="상품을 한 줄로 설명해주세요 (최대 200자)" maxlength="200" />
+                    <span class="char-count"><span id="short-count">0</span>/200</span>
+                </div>
+
+                <div class="form-group">
+                    <label>상세 설명 <span class="required">*</span></label>
+                    <textarea name="description" rows="12" placeholder="상품에 대한 자세한 설명을 입력하세요" required></textarea>
+                </div>
+            </div>
+
+            <!-- 이미지 섹션 -->
+            <div class="form-section-box">
+                <h3 class="section-title">상품 이미지</h3>
+
+                <div class="form-group">
+                    <label>메인 이미지 <span class="required">*</span></label>
+                    <div class="image-upload-area">
+                        <input type="file" id="main-image" name="mainImage" accept="image/*" required style="display: none;" />
+                        <label for="main-image" class="image-upload-btn">
+                            <span class="upload-icon">📷</span>
+                            <span>메인 이미지 선택</span>
+                            <span class="size-hint">권장 크기: 800x800px</span>
+                        </label>
+                        <div class="image-preview" id="main-preview"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>상세 이미지 (최대 5장)</label>
+                    <div class="image-upload-area">
+                        <input type="file" id="detail-images" name="detailImages" multiple accept="image/*" style="display: none;" />
+                        <label for="detail-images" class="image-upload-btn">
+                            <span class="upload-icon">📸</span>
+                            <span>상세 이미지 선택</span>
+                        </label>
+                        <div class="detail-preview" id="detail-preview"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 재고 섹션 -->
+            <div class="form-section-box">
+                <h3 class="section-title">재고 정보</h3>
+
+                <div class="form-group">
+                    <label>재고 수량 <span class="required">*</span></label>
+                    <input type="number" name="stockQty" placeholder="0" min="0" required />
+                </div>
+
+                <div class="form-group">
+                    <label>옵션 설정</label>
+                    <div class="option-settings">
+                        <div class="option-item">
+                            <input type="text" name="option1Name" placeholder="옵션명 (예: 색상)" />
+                            <textarea name="option1Values" placeholder="옵션값 (쉼표로 구분: 빨강, 파랑, 검정)" rows="3"></textarea>
+                        </div>
+                        <div class="option-item">
+                            <input type="text" name="option2Name" placeholder="옵션명 (예: 사이즈)" />
+                            <textarea name="option2Values" placeholder="옵션값 (쉼표로 구분: S, M, L, XL)" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 배송 섹션 -->
+            <div class="form-section-box">
+                <h3 class="section-title">배송 정보</h3>
+
+                <div class="form-group">
+                    <label>배송비</label>
+                    <div class="delivery-options">
+                        <label class="radio-label">
+                            <input type="radio" name="deliveryType" value="free" checked />
+                            <span>무료</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="deliveryType" value="paid" />
+                            <span>유료</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="delivery-fee-group" style="display: none;">
+                    <label>배송비 금액</label>
+                    <input type="number" name="deliveryFee" placeholder="0" min="0" />
+                    <span class="unit">원</span>
+                </div>
+
+                <div class="form-group">
+                    <label>배송 설명</label>
+                    <input type="text" name="deliveryDescription" placeholder="예: 당일 배송, 2-3일 배송" />
+                </div>
+            </div>
+
+            <!-- 버튼 -->
+            <div class="form-actions">
+                <button type="button" class="btn btn-cancel" onclick="history.back()">취소</button>
+                <button type="submit" class="btn btn-submit">상품 등록</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- 푸터 삽입 -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    // 글자수 카운팅
+    document.querySelector('input[name="productName"]').addEventListener('input', function() {
+        document.getElementById('name-count').textContent = this.value.length;
+    });
+
+    document.querySelector('input[name="shortDescription"]').addEventListener('input', function() {
+        document.getElementById('short-count').textContent = this.value.length;
+    });
+
+    // 배송 유료/무료 선택
+    document.querySelectorAll('input[name="deliveryType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const feeGroup = document.getElementById('delivery-fee-group');
+            feeGroup.style.display = this.value === 'paid' ? 'block' : 'none';
+        });
+    });
+
+    // 메인 이미지 미리보기
+    document.getElementById('main-image').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const preview = document.getElementById('main-preview');
+                preview.innerHTML = `<img src="${event.target.result}" alt="메인 이미지 미리보기" />`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // 상세 이미지 미리보기
+    document.getElementById('detail-images').addEventListener('change', function(e) {
+        const preview = document.getElementById('detail-preview');
+        preview.innerHTML = '';
+
+        Array.from(e.target.files).slice(0, 5).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.alt = '상세 이미지';
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    // 폼 제출 검증
+    document.getElementById('product-form').addEventListener('submit', function(e) {
+        const mainImage = document.getElementById('main-image').files[0];
+        if (!mainImage) {
+            e.preventDefault();
+            alert('메인 이미지를 선택해주세요.');
+            return;
+        }
+    });
+</script>
+</body>
+</html>
