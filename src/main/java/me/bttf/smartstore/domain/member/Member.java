@@ -16,7 +16,6 @@ import java.util.List;
 @Table(
         name = "member",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_member_login_id", columnNames = "login_id"),
                 @UniqueConstraint(name = "uk_member_email",    columnNames = "email")
         },
         indexes = {

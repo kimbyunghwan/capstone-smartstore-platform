@@ -2,6 +2,7 @@ package me.bttf.smartstore.domain.order;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import me.bttf.smartstore.domain.common.BaseEntity;
 import me.bttf.smartstore.domain.common.Money;
@@ -10,9 +11,11 @@ import me.bttf.smartstore.domain.member.Member;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 @Table(name = "orders")
 @AttributeOverride(name = "id", column = @Column(name = "order_id"))
 public class Order extends BaseEntity {
@@ -51,4 +54,28 @@ public class Order extends BaseEntity {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
+
+    public Order(Member member, AddressSnapshot recvAddress, String recvMemo) {
+        this.member = Objects.requireNonNull(member);
+        this.recvAddress = Objects.requireNonNull(recvAddress);
+        this.recvMemo = recvMemo;
+        this.status = OrderStatus.PENDING;
+        this.orderTotal = new Money(java.math.BigDecimal.ZERO);
+    }
+
+    public void addItem(OrderItem item) {
+        items.add(item);
+
+        if (item.getOrder() != this) {
+            try {
+                var orderField = OrderItem.class.getDeclaredField("order");
+                orderField.setAccessible(true);
+                orderField.set(item, this);
+            } catch (Exception ignore) {}
+        }
+    }
+
+    public void setTotal(Money total) { this.orderTotal = total; }
+
+    public void changeStatus(OrderStatus status) { this.status = status; }
 }

@@ -9,6 +9,8 @@ import me.bttf.smartstore.domain.common.Money;
 import me.bttf.smartstore.domain.product.Product;
 import me.bttf.smartstore.domain.product.ProductOption;
 
+import java.util.Objects;
+
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
@@ -41,4 +43,16 @@ public class OrderItem extends BaseEntity {
 
     @Column(nullable = false)
     private Integer qty;
+
+    public OrderItem(Order order, Product product, ProductOption option,
+                     String productName, String optionName, Money unitPrice, Integer qty) {
+        this.order = Objects.requireNonNull(order);
+        this.product = Objects.requireNonNull(product);
+        this.option = Objects.requireNonNull(option);
+        this.productName = Objects.requireNonNull(productName);
+        this.optionName = optionName;
+        this.unitPrice = Objects.requireNonNull(unitPrice);
+        if (qty == null || qty < 1) throw new IllegalArgumentException("qty >= 1");
+        this.qty = qty;
+    }
 }

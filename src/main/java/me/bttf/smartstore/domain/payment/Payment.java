@@ -15,9 +15,7 @@ import java.time.LocalDateTime;
 @Getter
 @Table(
         name = "payment",
-        indexes = {
-                @Index(name = "ix_pg_transaction", columnList = "pg_transaction_id")
-        }
+        indexes = { @Index(name = "ix_pg_transaction", columnList = "pg_tid") }
 )
 @AttributeOverride(name = "id", column = @Column(name = "payment_id"))
 public class Payment extends BaseEntity {
@@ -48,6 +46,5 @@ public class Payment extends BaseEntity {
     // PG사 거래 번호(= ERD의 pg_tid)
     @Column(name = "pg_tid", length = 100, unique = true)
     private String pgTid;
-
 
 }

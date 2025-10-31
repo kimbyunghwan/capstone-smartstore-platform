@@ -55,4 +55,8 @@ public class ProductOption extends BaseEntity {
         this.price = price;
         this.stockQty = (stockQty != null) ? stockQty : 0;
     }
+
+    public void updateStockQty(int newQty) {
+        this.stockQty = newQty;
+    }
 }
