@@ -1,4 +1,4 @@
-package me.bttf.smartstore.controller.seller;
+package me.bttf.smartstore.controller.api.seller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/seller")
+@RequestMapping("/api/v1/seller")
 //@PreAuthorize("hasRole('SELLER')")
 public class SellerDashboardController {
 

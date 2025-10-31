@@ -1,4 +1,4 @@
-package me.bttf.smartstore.controller.user;
+package me.bttf.smartstore.controller.api.user;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/reviews")
+@RequestMapping("/api/v1/reviews")
 @Transactional(readOnly = true)
 public class ReviewController {
 

@@ -1,4 +1,4 @@
-package me.bttf.smartstore.controller.admin;
+package me.bttf.smartstore.controller.api.admin;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/seller/categories")
+@RequestMapping("/api/v1/seller/categories")
 public class CategoryController {
 
     private final CategoryRepository categoryRepo;

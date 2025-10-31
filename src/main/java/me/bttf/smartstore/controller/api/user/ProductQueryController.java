@@ -1,4 +1,4 @@
-package me.bttf.smartstore.controller.user;
+package me.bttf.smartstore.controller.api.user;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/products")
+@RequestMapping("/api/v1/products")
 @Transactional(readOnly = true)
 public class ProductQueryController {
 

@@ -1,4 +1,4 @@
-package me.bttf.smartstore.controller.user;
+package me.bttf.smartstore.controller.api.user;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1")
 public class OrderController {
 
     private final OrderService orderService;

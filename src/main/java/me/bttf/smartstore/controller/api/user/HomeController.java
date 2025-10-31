@@ -1,11 +1,11 @@
-package me.bttf.smartstore.controller.user;
+package me.bttf.smartstore.controller.api.user;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/api/v1")
 public class HomeController {
     @GetMapping
     public String home() { return "OK"; }
