@@ -2,6 +2,7 @@ package me.bttf.smartstore.domain.product;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import me.bttf.smartstore.domain.common.BaseEntity;
@@ -26,11 +27,30 @@ public class Product extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private ProductStatus status;
+    private ProductStatus status = ProductStatus.INACTIVE;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductOption> options = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
+
+    @Builder
+    public Product(Store store, String name, ProductStatus status) {
+        if (store == null) throw new IllegalArgumentException("Store는 필수");
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("상품명은 필수");
+        this.store = store;
+        this.name = name;
+        this.status = status != null ? status : ProductStatus.INACTIVE;
+    }
+
+    public void changeName(String newName) {
+        if (newName == null || newName.isBlank()) throw new IllegalArgumentException("상품명은 필수");
+        this.name = newName;
+    }
+
+    public void changeStatus(ProductStatus status) {
+        if (status == null) throw new IllegalArgumentException("상태는 필수");
+        this.status = status;
+    }
 }

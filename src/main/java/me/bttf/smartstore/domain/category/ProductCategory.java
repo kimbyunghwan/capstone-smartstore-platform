@@ -40,4 +40,8 @@ public class ProductCategory {
         this.id = new ProductCategoryId(product.getId(), category.getId());
         this.primaryCategory = primaryCategory;
     }
+
+    public void setPrimary(boolean v){
+        this.primaryCategory = v;
+    }
 }
