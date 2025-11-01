@@ -18,15 +18,17 @@
             <!-- 상품 이미지 -->
             <div class="product-image-area">
                 <div class="main-image">
-                    <img th:src="@{${product?.imageUrl ?: '/images/placeholder.jpg'}}"
-                         th:alt="${product?.name}" />
+                    <img th:src="${product != null and product.thumbnailUrl != null}
+                                 ? ${product.thumbnailUrl}
+                                 : '/img/placeholder.png'"
+                         th:alt="${product != null} ? ${product.name} : '상품 이미지'"/>
                 </div>
-                <!-- 썸네일 이미지 (여러 개일 경우) -->
-                <div class="thumbnail-list" th:if="${product?.images != null}">
-                    <div class="thumbnail-item" th:each="img : ${product.images}">
-                        <img th:src="@{${img}}" th:alt="상품 이미지" />
-                    </div>
-                </div>
+<!--                &lt;!&ndash; 썸네일 이미지 (여러 개일 경우) &ndash;&gt;-->
+<!--                <div class="thumbnail-list" th:if="${product?.images != null}">-->
+<!--                    <div class="thumbnail-item" th:each="img : ${product.images}">-->
+<!--                        <img th:src="@{${img}}" th:alt="상품 이미지" />-->
+<!--                    </div>-->
+<!--                </div>-->
             </div>
 
             <!-- 상품 정보 -->
@@ -36,32 +38,39 @@
 
                 <!-- 상점 정보 -->
                 <div class="store-info">
-                    <span class="store-name" th:text="${product?.storeName ?: '상점명'}">상점명</span>
+                    <span class="store-name"
+                          th:text="${(product != null and product.storeName != null) ? product.storeName : '상점명'}">
+                      상점명
+                    </span>
                     <button class="btn-store">스토어 홈</button>
                 </div>
 
-                <!-- 리뷰 정보 -->
+                <!-- 리뷰 요약 -->
                 <div class="review-info">
-                        <span class="rating">
-                            <span class="star">★★★★★</span>
-                            <strong th:text="${product?.rating ?: '0.0'}">4.8</strong>
-                        </span>
-                    <span class="review-count">
-                            (<span th:text="${product?.reviewCount ?: 0}">128</span>개 리뷰)
-                        </span>
+                  <span class="rating">
+                    <span class="star">★★★★★</span>
+                    <strong th:text="${#numbers.formatDecimal(product.rating, 1, 1)}">0.0</strong>
+                    <span>/5</span>
+                  </span>
+                                    <span class="review-count">
+                    (<span th:text="${product.reviewCount}">0</span>개 리뷰)
+                  </span>
+                </div>
+
+                <!-- 리뷰가 비었는지 -->
+                <div th:if="${reviews == null or reviews.isEmpty()}">
+                    아직 작성된 리뷰가 없습니다.
                 </div>
 
                 <!-- 가격 정보 -->
                 <div class="price-area">
-                    <div class="original-price" th:if="${product?.originalPrice != null}">
-                        <span th:text="${#numbers.formatInteger(product.originalPrice, 0, 'COMMA')} + '원'">50,000원</span>
-                    </div>
-                    <div class="discount-info" th:if="${product?.discountRate != null}">
-                        <span class="discount-rate" th:text="${product.discountRate} + '%'">20%</span>
-                        <span class="discount-label">할인</span>
-                    </div>
                     <div class="final-price">
-                        <strong th:text="${#numbers.formatInteger(product?.price ?: 0, 0, 'COMMA')} + '원'">40,000원</strong>
+                        <strong id="unit-price"
+                                th:with="p=${(product != null and product.minPrice != null) ? product.minPrice : 0}"
+                                th:attr="data-price=${p}"
+                                th:text="|${#numbers.formatInteger(p, 0, 'COMMA')}원|">
+                            0원
+                        </strong>
                     </div>
                 </div>
 
@@ -84,9 +93,9 @@
                         <option value="">옵션을 선택하세요</option>
                         <option th:each="option : ${product?.options}"
                                 th:value="${option.optionId}"
-                                th:text="${option.optionName} + ' (+' + ${#numbers.formatInteger(option.price, 0, 'COMMA')} + '원)'"
+                                th:attr="data-price=${option.price}"
+                                th:text="${option.name} + ' (+' + ${#numbers.formatInteger(option.price, 0, 'COMMA')} + '원)'"
                                 th:disabled="${option.stockQty <= 0}">
-                            색상: 블랙 (+0원)
                         </option>
                     </select>
                 </div>
@@ -105,8 +114,11 @@
                 <div class="total-price-area">
                     <span class="total-label">총 상품금액</span>
                     <span class="total-price">
-                            <strong th:text="${#numbers.formatInteger(product?.price ?: 0, 0, 'COMMA')}">40,000</strong>원
-                        </span>
+                    <strong id="total-price"
+                            th:text="${#numbers.formatInteger((product?.minPrice != null ? product.minPrice : 0), 0, 'COMMA')} + '원'">
+                      0원
+                    </strong>
+                  </span>
                 </div>
 
                 <!-- 구매 버튼 -->
@@ -121,7 +133,7 @@
         <div class="product-detail-tabs">
             <div class="tab-header">
                 <button class="tab-btn active" data-tab="description">상품정보</button>
-                <button class="tab-btn" data-tab="reviews">리뷰 (<span th:text="${product?.reviewCount ?: 0}">128</span>)</button>
+                <button class="tab-btn" data-tab="reviews">리뷰 (<span th:text="${reviews != null ? reviews.size() : 0}">0</span>)</button>
                 <button class="tab-btn" data-tab="qna">문의</button>
                 <button class="tab-btn" data-tab="delivery">배송/교환/반품</button>
             </div>
@@ -129,43 +141,92 @@
             <!-- 상품정보 탭 -->
             <div class="tab-content active" id="description">
                 <div class="description-content">
-                    <p th:utext="${product?.description ?: '상품 설명이 없습니다.'}">
-                        상품 설명 내용이 들어갑니다.
+
+                    <!-- 짧은 설명 -->
+                    <p>
+                        <strong>짧은 설명 :</strong>
+                        <span th:text="${product.shortDescription ?: '없음'}"></span>
                     </p>
+
+                    <br>
+                    <!-- 상세 설명 -->
+
+                    <p>
+                        <strong>상세 설명 :</strong>
+                        <span th:utext="${product.description ?: '상품 상세 설명이 없습니다.'}"></span>
+                    </p>
+
                 </div>
             </div>
 
             <!-- 리뷰 탭 -->
             <div class="tab-content" id="reviews">
+                <!-- 탭 내 요약(원하면 생략 가능) -->
                 <div class="review-summary">
                     <div class="rating-summary">
                         <h3>구매자 평점</h3>
                         <div class="rating-score">
-                            <span class="score" th:text="${product?.rating ?: '0.0'}">4.8</span>
+                            <span class="score" th:text="${#numbers.formatDecimal(product.rating, 1, 1)}">0.0</span>
                             <span class="max">/5</span>
                         </div>
                         <div class="star-display">★★★★★</div>
+                        <div class="count">
+                            (<span th:text="${product.reviewCount}">0</span>개 리뷰)
+                        </div>
                     </div>
                 </div>
 
-                <!-- 리뷰 리스트 -->
-                <div class="review-list">
+                <!-- 리뷰 없을 때 -->
+                <div class="empty-review" th:if="${reviews == null or reviews.isEmpty()}">
+                    <p>아직 작성된 리뷰가 없습니다.</p>
+                </div>
+
+                <!-- 리뷰 목록 -->
+                <div class="review-list" th:if="${reviews != null and !reviews.isEmpty()}">
                     <div class="review-item" th:each="review : ${reviews}">
                         <div class="review-header">
-                            <span class="reviewer" th:text="${review.memberName}">홍길동</span>
-                            <span class="review-rating">★★★★★</span>
-                            <span class="review-date" th:text="${#temporals.format(review.createdAt, 'yyyy.MM.dd')}">2024.10.20</span>
+                            <!-- memberName 없으면 아래 줄은 빼거나 memberId로 표시 -->
+                            <!-- <span class="reviewer" th:text="${review.memberName}">홍길동</span> -->
+                            <span class="review-rating" th:text="${review.rating} + '★'">5★</span>
+                            <span class="review-date"
+                                  th:text="${#temporals.format(review.createdAt, 'yyyy.MM.dd')}">2024.10.20</span>
                         </div>
                         <div class="review-content" th:text="${review.content}">
                             상품 정말 좋아요! 배송도 빠르고 품질도 훌륭합니다.
                         </div>
                     </div>
-
-                    <!-- 리뷰 없을 때 -->
-                    <div class="empty-review" th:if="${reviews == null or reviews.isEmpty()}">
-                        <p>아직 작성된 리뷰가 없습니다.</p>
-                    </div>
                 </div>
+
+                <!-- 리뷰 작성 (반드시 리뷰 탭 내부, 목록 아래쪽) -->
+                <div class="review-write-card">
+                    <h4>리뷰 작성</h4>
+
+                    <!-- ★ 별 클릭 평점 -->
+                    <div class="rating-stars" role="radiogroup" aria-label="평점">
+                        <input type="radio" id="star5" name="rating" value="5" checked>
+                        <label for="star5" title="5점">★</label>
+
+                        <input type="radio" id="star4" name="rating" value="4">
+                        <label for="star4" title="4점">★</label>
+
+                        <input type="radio" id="star3" name="rating" value="3">
+                        <label for="star3" title="3점">★</label>
+
+                        <input type="radio" id="star2" name="rating" value="2">
+                        <label for="star2" title="2점">★</label>
+
+                        <input type="radio" id="star1" name="rating" value="1">
+                        <label for="star1" title="1점">★</label>
+                    </div>
+
+                    <textarea id="content" class="review-text" placeholder="리뷰를 입력하세요"></textarea>
+
+                    <button id="submitReview" type="button" class="btn-primary"
+                            th:data-product-id="${product.productId}">
+                        등록
+                    </button>
+                </div>
+
             </div>
 
             <!-- 문의 탭 -->
@@ -210,16 +271,72 @@
         });
     });
 
-    // 수량 조절
-    document.querySelector('.minus')?.addEventListener('click', function() {
-        const input = document.querySelector('.qty-input');
-        if (input.value > 1) input.value = parseInt(input.value) - 1;
+    document.addEventListener('DOMContentLoaded', function () {
+        const qtyInput  = document.querySelector('.qty-input');
+        const minusBtn  = document.querySelector('.minus');
+        const plusBtn   = document.querySelector('.plus');
+        const totalEl   = document.querySelector('#total-price');
+        const unitEl    = document.querySelector('#unit-price');
+        const optionSel = document.querySelector('#product-option'); // 옵션 select id
+
+        function getUnitPrice() {
+            // 옵션 선택 시 옵션가 우선
+            if (optionSel && optionSel.value) {
+                const price = optionSel.selectedOptions[0]?.dataset?.price;
+                if (price) return parseInt(price, 10);
+            }
+            // 기본 단가
+            return parseInt(unitEl?.dataset?.price || '0', 10);
+        }
+
+        function updateTotal() {
+            const qty = Math.max(1, parseInt(qtyInput.value || '1', 10));
+            const total = getUnitPrice() * qty;
+            totalEl.textContent = total.toLocaleString('ko-KR') + '원';
+        }
+
+        minusBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            qtyInput.value = Math.max(1, parseInt(qtyInput.value || '1', 10) - 1);
+            updateTotal();
+        });
+
+        plusBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            qtyInput.value = parseInt(qtyInput.value || '1', 10) + 1;
+            updateTotal();
+        });
+
+        qtyInput?.addEventListener('change', updateTotal);
+        optionSel?.addEventListener('change', updateTotal);
+
+        // 초기 표시
+        updateTotal();
     });
 
-    document.querySelector('.plus')?.addEventListener('click', function() {
-        const input = document.querySelector('.qty-input');
-        input.value = parseInt(input.value) + 1;
-    });
+    // ===== 리뷰 작성 =====
+    const reviewBtn = document.getElementById('submitReview');
+    if (reviewBtn) {
+        reviewBtn.addEventListener('click', async () => {
+            const productId = reviewBtn.dataset.productId;
+            const rating = Number(document.querySelector('input[name="rating"]:checked')?.value || 5);
+            const content = document.getElementById('content').value.trim();
+            if (!content) return alert('내용을 입력하세요.');
+
+            try {
+                const res = await fetch(`/api/v1/reviews/${productId}/new`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ memberId: 1, rating, content })
+                });
+                if (!res.ok) return alert(await res.text() || '리뷰 등록 실패');
+                alert('리뷰가 등록되었습니다.');
+                location.reload();
+            } catch (e) {
+                alert('서버 오류: ' + e.message);
+            }
+        });
+    }
 </script>
 </body>
 </html>

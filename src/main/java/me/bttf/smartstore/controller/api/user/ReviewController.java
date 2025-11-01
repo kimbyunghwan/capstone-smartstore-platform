@@ -2,14 +2,20 @@ package me.bttf.smartstore.controller.api.user;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import me.bttf.smartstore.domain.product.Product;
+import me.bttf.smartstore.dto.product.ProductDetailRes;
 import me.bttf.smartstore.dto.review.ReviewCreateReq;
 import me.bttf.smartstore.dto.review.ReviewRes;
 import me.bttf.smartstore.dto.review.ReviewUpdateReq;
+import me.bttf.smartstore.exception.ResourceNotFoundException;
+import me.bttf.smartstore.repository.ProductRepository;
 import me.bttf.smartstore.service.ReviewService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final ProductRepository productRepo;
 
     // 리뷰 작성 (/reviews/{productId}/new)
     @PostMapping("/{productId}/new")
@@ -48,5 +55,20 @@ public class ReviewController {
     public Page<ReviewRes> list(@RequestParam Long productId,
                                 @PageableDefault(size = 10) Pageable pageable) {
         return reviewService.listByProduct(productId, pageable);
+    }
+
+    @GetMapping("/products/{id}")
+    public String detail(@PathVariable Long id, Model model) {
+        Product p = productRepo.findDetailById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("상품을 찾을 수 없습니다. id=" + id));
+
+        ProductDetailRes dto = ProductDetailRes.from(p);
+
+        var stats = reviewService.getStats(id); // avg, count
+        dto = dto.withRating(stats.avg()).withReviewCount(stats.count());
+
+        model.addAttribute("product", dto);
+        model.addAttribute("reviews", reviewService.listByProduct(id, PageRequest.of(0, 10)));
+        return "products/detail";
     }
 }

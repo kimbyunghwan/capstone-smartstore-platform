@@ -31,6 +31,10 @@ public class ReviewService {
         Member member = memberRepo.findById(req.memberId())
                 .orElseThrow(() -> new ResourceNotFoundException("회원이 없습니다. id=" + req.memberId()));
 
+        if (reviewRepo.existsByProduct_IdAndMember_Id(productId, req.memberId())) {
+            throw new IllegalStateException("이미 이 상품에 리뷰를 작성했습니다.");
+        }
+
         Review review = Review.create(product, member, req.rating(), req.content());
         Review saved = reviewRepo.save(review);
         return toRes(saved);
@@ -56,6 +60,15 @@ public class ReviewService {
     public Page<ReviewRes> listByProduct(Long productId, Pageable pageable) {
         return reviewRepo.findByProduct_Id(productId, pageable).map(this::toRes);
     }
+
+    @Transactional(readOnly = true)
+    public ReviewStats getStats(Long productId) {
+        double avg  = reviewRepo.avgRatingByProductId(productId);
+        long count  = reviewRepo.countByProduct_Id(productId);
+        return new ReviewStats(avg, count);
+    }
+
+    public record ReviewStats(double avg, long count) {}
 
     private ReviewRes toRes(Review r) {
         return new ReviewRes(

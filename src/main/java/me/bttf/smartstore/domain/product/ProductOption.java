@@ -59,4 +59,14 @@ public class ProductOption extends BaseEntity {
     public void updateStockQty(int newQty) {
         this.stockQty = newQty;
     }
+
+    public void changePrice(Money newPrice) {
+        if (newPrice == null) throw new IllegalArgumentException("가격은 필수");
+        this.price = newPrice;
+    }
+
+    public void changeStock(int newQty) {
+        if (newQty < 0) throw new IllegalArgumentException("재고는 0 이상");
+        this.stockQty = newQty;
+    }
 }
