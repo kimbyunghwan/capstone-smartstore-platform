@@ -1,5 +1,5 @@
 <!-- 헤더 영역 -->
-<header class="header" th:fragment="header">
+<header class="header" th:fragment="header" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
     <div class="header-top">
         <div class="container">
             <div class="header-links">
@@ -13,11 +13,18 @@
                 </form>
 
                 <div class="right-links">
-                    <a href="/register">회원가입</a>
-                    <a href="/login">로그인</a>
-                    <a href="/logout" th:if="${member != null}">로그아웃</a>
-                    <a href="/orders" th:if="${member != null}">마이페이지</a>
-                    <a href="/seller/dashboard" th:if="${member?.isSeller}">판매자센터</a>
+                    <!-- 비로그인 상태일 때만 표시 -->
+                    <a href="/register" sec:authorize="!isAuthenticated()">회원가입</a>
+                    <a href="/login" sec:authorize="!isAuthenticated()">로그인</a>
+
+                    <!-- 로그인 상태일 때만 표시 -->
+                    <a href="/logout" sec:authorize="isAuthenticated()">로그아웃</a>
+                    <a href="/orders" sec:authorize="isAuthenticated()">마이페이지</a>
+
+                    <!-- SELLER 권한이 있을 때만 표시 -->
+                    <a href="/seller/dashboard" sec:authorize="hasRole('SELLER')">판매자센터</a>
+
+                    <!-- 장바구니는 항상 표시 -->
                     <a href="/cart">장바구니</a>
                 </div>
             </div>

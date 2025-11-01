@@ -3831,3 +3831,23 @@ section {
 .right-buttons .btn-submit {
     padding: 16px 48px;
 }
+
+/* 알림 메시지 */
+.alert {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.alert-danger {
+    background: #fee;
+    color: #c00;
+    border: 1px solid #fcc;
+}
+
+.alert-success {
+    background: #efe;
+    color: #090;
+    border: 1px solid #cfc;
+}
