@@ -12,24 +12,53 @@ public record ProductDetailRes(
         String name,
         String status,
         Long storeId,
-        List<OptionRes> options
+        String storeName,
+        String thumbnailUrl,
+        BigDecimal minPrice,
+        String shortDescription,
+        String description,
+        List<OptionRes> options,
+        double rating,
+        long reviewCount
 ) {
     public static ProductDetailRes from(Product p) {
+        var min = p.getOptions().stream()
+                .map(o -> o.getPrice().getAmount())
+                .min(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
+
         return new ProductDetailRes(
                 p.getId(),
                 p.getName(),
                 p.getStatus().name(),
-                p.getStore().getId(),
-                p.getOptions().stream().map(OptionRes::from).toList()
+                p.getStore() != null ? p.getStore().getId() : null,
+                p.getStore() != null ? p.getStore().getStoreName() : null,
+                p.getThumbnailUrl(),
+                min,
+                p.getShortDescription(),
+                p.getDescription(),
+                p.getOptions().stream().map(OptionRes::from).toList(),
+                0.0,
+                0L
         );
     }
 
-    // 옵션 DTO: 엔티티 필드에 맞게 매핑
+    public ProductDetailRes withRating(double value) {
+        return new ProductDetailRes(productId, name, status, storeId, storeName,
+                thumbnailUrl, minPrice, shortDescription, description, options, value, reviewCount);
+    }
+
+    public ProductDetailRes withReviewCount(long value) {
+        return new ProductDetailRes(productId, name, status, storeId, storeName,
+                thumbnailUrl, minPrice, shortDescription, description, options, rating, value);
+    }
+
+    // 엔티티 필드에 맞게 매핑
     public record OptionRes(
             Long optionId,
             String sku,
-            String name,           // optionName
-            BigDecimal price,      // price.amount
+            String name,
+            BigDecimal price,
             Integer stockQty,
             String attrJson
     ) {
@@ -38,7 +67,7 @@ public record ProductDetailRes(
                     o.getId(),
                     o.getSku(),
                     o.getOptionName(),
-                    o.getPrice().getAmount(), // Money의 amount getter 사용
+                    o.getPrice().getAmount(),
                     o.getStockQty(),
                     o.getAttrJson()
             );
