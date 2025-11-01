@@ -1,4 +1,4 @@
-package me.bttf.smartstore.controller;
+package me.bttf.smartstore;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
