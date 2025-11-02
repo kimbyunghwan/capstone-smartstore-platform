@@ -15,8 +15,14 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductCategoryRepository extends JpaRepository<ProductCategory, ProductCategoryId> {
-    List<ProductCategory> findByProduct_Id(Long productId);
-    List<ProductCategory> findByCategory_Id(Long categoryId);
+
+    @Query("""
+        select pc.category.id
+        from ProductCategory pc
+        where pc.product.id = :productId
+          and pc.primaryCategory = true
+    """)
+    Optional<Long> findPrimaryCategoryId(@Param("productId") Long productId);
 
     // 카테고리 여러 개(하위 포함)로 상품 페이징
     @Query("""
@@ -27,12 +33,11 @@ public interface ProductCategoryRepository extends JpaRepository<ProductCategory
             @Param("categoryIds") Collection<Long> categoryIds,
             Pageable pageable);
 
-    Optional<ProductCategory> findByProduct_IdAndPrimaryCategoryTrue(Long productId);
-
-    // 대표 플래그 일괄 해제 (선택) — 벌크 업데이트
     @Modifying
     @Query("update ProductCategory pc " +
             "set pc.primaryCategory=false " +
             "where pc.product.id=:productId and pc.primaryCategory=true")
     int clearPrimary(@Param("productId") Long productId);
+
+    boolean existsById(ProductCategoryId id);
 }

@@ -2,6 +2,8 @@ package me.bttf.smartstore.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.bttf.smartstore.domain.category.Category;
+import me.bttf.smartstore.domain.category.ProductCategory;
 import me.bttf.smartstore.domain.common.Money;
 import me.bttf.smartstore.domain.product.Product;
 import me.bttf.smartstore.domain.product.ProductOption;
@@ -12,9 +14,8 @@ import me.bttf.smartstore.dto.product.ProductUpdateForm;
 import me.bttf.smartstore.dto.seller.ProductCreateReq;
 import me.bttf.smartstore.dto.seller.ProductUpdateReq;
 import me.bttf.smartstore.dto.seller.SkuReq;
-import me.bttf.smartstore.repository.ProductOptionRepository;
-import me.bttf.smartstore.repository.ProductRepository;
-import me.bttf.smartstore.repository.StoreRepository;
+import me.bttf.smartstore.repository.*;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,13 +32,16 @@ public class SellerProductService {
     private final ProductOptionRepository optionRepo;
     private final ProductCategoryService categoryService;
     private final StoreRepository storeRepo;
+    private final CategoryRepository categoryRepo;
     private final ImageStorage imageStorage;
+    private final ProductCategoryRepository productCategoryRepo;
 
     /* ===================== 1) 폼 기반 ===================== */
 
-    public Long createFromForm(ProductCreateForm form) {
+    public Long createFromForm(ProductCreateForm form, Long memberId) {
         // 0) 스토어 결정 (예: 로그인 판매자의 storeId). 폼에 없으면 인증정보로 조회해 바인딩.
-        Store store = resolveCurrentSellerStore();
+        Store store = storeRepo.findByOwner_Id(memberId)
+                .orElseThrow(() -> new IllegalStateException("판매자 스토어가 없습니다."));
 
         // 1) Product 생성 (이름/상태만)
         Product p = Product.builder()
@@ -58,7 +62,15 @@ public class SellerProductService {
         productRepo.save(p);
 
         // 3) 카테고리 매핑 (문자열 category → id 매핑 로직이 있다면 여기서)
-        // TODO: categoryService.assignByCode(p.getId(), form.getCategory(), true);
+        Long catId = form.getCategoryId();
+        if (catId == null) throw new IllegalArgumentException("카테고리를 선택하세요.");
+
+        Category cat = categoryRepo.findById(catId)
+                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다. id=" + catId));
+
+        // 대표카테고리 하나만 유지하고 저장
+        productCategoryRepo.clearPrimary(p.getId());
+        productCategoryRepo.save(new ProductCategory(p, cat, true));
 
         // 4) 옵션 생성 + 초기 재고/가격
         createOptionsFromForm(p, form, mainUrl);
@@ -66,8 +78,8 @@ public class SellerProductService {
         return p.getId();
     }
 
-    public void updateFromForm(ProductUpdateForm form) {
-        Product p = productRepo.findById(form.getProductId()).orElseThrow();
+    public void updateFromForm(ProductUpdateForm form, Long memberId) {
+        Product p = requireOwnedProduct(form.getProductId(), memberId);
 
         // 이름만 변경 (설명/이미지 등을 Product에 둘 계획이면 도메인 메서드 추가)
         p.changeName(form.getProductName());
@@ -131,8 +143,10 @@ public class SellerProductService {
     }
 
     /* ===================== 2) API(JSON) ===================== */
-    public Long createFromApi(ProductCreateReq req) {
-        Store store = storeRepo.findById(req.storeId()).orElseThrow();
+    public Long createFromApi(ProductCreateReq req, Long memberId) {
+
+        Store store = storeRepo.findByOwner_Id(memberId)
+                .orElseThrow(() -> new IllegalStateException("판매자 스토어가 없습니다."));
 
         Product p = Product.builder()
                 .store(store)
@@ -163,8 +177,8 @@ public class SellerProductService {
         return p.getId();
     }
 
-    public void updateFromApi(Long id, ProductUpdateReq req) {
-        Product p = productRepo.findById(id).orElseThrow();
+    public void updateFromApi(Long id, ProductUpdateReq req, Long memberId) {
+        Product p = requireOwnedProduct(id, memberId);
         if (req.name() != null && !req.name().isBlank()) p.changeName(req.name());
         if (req.status() != null) p.changeStatus(req.status());
     }
@@ -172,17 +186,13 @@ public class SellerProductService {
     /* ===================== 3) 공통 ===================== */
 
     @Transactional(readOnly = true)
-    public Product getEditView(Long id) {
-        return productRepo.findById(id).orElseThrow();
+    public Product getEditView(Long id, Long memberId) {
+        return requireOwnedProduct(id, memberId);
     }
 
-    public void delete(Long id) { productRepo.deleteById(id); }
-
-    /* util */
-
-    private Store resolveCurrentSellerStore() {
-        // 임시: 단일 스토어 환경이라면 첫 스토어나 고정 ID 사용
-        return storeRepo.findById(1L).orElseThrow(); // 예시
+    public void delete(Long id, Long memberId) {
+        Product p = requireOwnedProduct(id, memberId);
+        productRepo.delete(p);
     }
 
     private static String genSku(Long productId, int seq) {
@@ -211,5 +221,16 @@ public class SellerProductService {
         if (k2 != null && !k2.isBlank()) { if (!first) sb.append(','); sb.append('"').append(k2).append("\":\"").append(v2).append('"'); }
         sb.append('}');
         return sb.toString();
+    }
+
+    /** 공통: 소유권 확인용 헬퍼 */
+    private Product requireOwnedProduct(Long productId, Long memberId) {
+        return productRepo.findByIdAndStore_Owner_Id(productId, memberId)
+                .orElseThrow(() -> new AccessDeniedException("본인 스토어의 상품만 접근 가능합니다."));
+    }
+
+    /** 상품의 대표 카테고리 ID 조회 */
+    public Long getPrimaryCategoryId(Long productId) {
+        return productCategoryRepo.findPrimaryCategoryId(productId).orElse(null);
     }
 }

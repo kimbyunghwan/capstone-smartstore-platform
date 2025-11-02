@@ -17,15 +17,22 @@
                     <a href="/register" sec:authorize="!isAuthenticated()">회원가입</a>
                     <a href="/login" sec:authorize="!isAuthenticated()">로그인</a>
 
-                    <!-- 로그인 상태일 때만 표시 -->
-                    <a href="/logout" sec:authorize="isAuthenticated()">로그아웃</a>
-                    <a href="/orders" sec:authorize="isAuthenticated()">마이페이지</a>
+                    <span sec:authorize="isAuthenticated()">
+                      안녕하세요, <strong th:text="${session.LOGIN_MEMBER.name}"></strong>님
+                      <form th:action="@{/logout}" method="post" style="display:inline">
+                          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                          <button type="submit" class="btn-link">로그아웃</button>
+                      </form>
+                    </span>
 
                     <!-- SELLER 권한이 있을 때만 표시 -->
                     <a href="/seller/dashboard" sec:authorize="hasRole('SELLER')">판매자센터</a>
 
                     <!-- 장바구니는 항상 표시 -->
                     <a href="/cart">장바구니</a>
+
+<!--                    &lt;!&ndash; 판매자만 노출 &ndash;&gt;-->
+<!--                    <a th:href="@{/seller/products}" sec:authorize="hasRole('SELLER')">상품 등록/관리</a>-->
                 </div>
             </div>
         </div>

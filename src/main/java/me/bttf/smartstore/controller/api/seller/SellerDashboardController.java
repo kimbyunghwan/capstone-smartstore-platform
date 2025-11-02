@@ -3,6 +3,8 @@ package me.bttf.smartstore.controller.api.seller;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import me.bttf.smartstore.auth.CustomUserDetails;
 import me.bttf.smartstore.domain.product.Product;
 import me.bttf.smartstore.domain.product.ProductOption;
 import me.bttf.smartstore.domain.product.ProductStatus;
@@ -21,13 +23,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/seller")
-//@PreAuthorize("hasRole('SELLER')")
 public class SellerDashboardController {
 
 
@@ -50,15 +53,24 @@ public class SellerDashboardController {
     @PostMapping("/products/new")
     @Operation(summary = "상품 등록")
     @Transactional
-    public ProductListRes createProduct(@RequestBody ProductCreateReq req) {
-        Store store = storeRepo.findById(req.storeId()).orElseThrow();
+    public ProductListRes createProduct(
+            @RequestBody ProductCreateReq req,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+
+        Long memberId = principal.getMember().getId();
+        log.info("[CREATE_PRODUCT] called by memberId={}", memberId);
+
+        Store store = storeRepo.findByOwner_Id(memberId)
+                .orElseThrow(() -> new IllegalStateException("판매자 스토어가 없습니다."));
+        log.info("[CREATE_PRODUCT] resolved storeId={}", store.getId());
 
         Product product = Product.builder()
                 .store(store)
                 .name(req.name())
-                .status(ProductStatus.INACTIVE) // 또는 req.status()로 받을 수도 있음
+                .status(ProductStatus.INACTIVE)
                 .build();
         productRepo.save(product);
+        log.info("[CREATE_PRODUCT] saved productId={}, storeId={}", product.getId(), store.getId());
 
         pcService.assign(product.getId(), req.categoryId(), req.primary());
 

@@ -73,8 +73,14 @@
 
 .right-links {
     display: flex;
-    gap: 20px;
+    align-items: center;
+    gap: 12px;
     flex-shrink: 0;
+    font-size: 18px;
+}
+
+.header-links .right-links a {
+    font-size: inherit !important;
 }
 
 .header-links a {

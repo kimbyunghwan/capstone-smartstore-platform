@@ -14,8 +14,8 @@ public class ProductCreateForm {
     @NotBlank
     private String productName;
 
-    @NotBlank
-    private String category; // enum이면 나중에 Category enum으로
+    @NotNull
+    private Long categoryId;
 
     @NotNull
     @Min(0)

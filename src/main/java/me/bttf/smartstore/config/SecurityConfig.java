@@ -1,10 +1,14 @@
 package me.bttf.smartstore.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -12,7 +16,10 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity // @PreAuthorize, @Secured 등 메소드 보안 활성화
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final UserDetailsService userDetailsService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -34,9 +41,14 @@ public class SecurityConfig {
                                 "/images/**",                 // 이미지 파일
                                 "/login",                     // 로그인 페이지
                                 "/register",              // 회원가입 페이지
+                                "/access-denied",             // 비 로그인 시 장바구니
                                 "/error",                     // 에러 페이지
                                 "/favicon.ico"                // 파비콘
                         ).permitAll()
+
+                        // 업로드/썸네일 실제 서빙 경로(프로젝트에 맞게 추가)
+                        .requestMatchers(HttpMethod.GET, "/uploads/**", "/files/**", "/thumbnails/**", "/static/**")
+                        .permitAll()
 
                         // 판매자 경로 (SELLER 역할 필요)
                         .requestMatchers("/seller/**").hasRole("SELLER")
@@ -58,6 +70,11 @@ public class SecurityConfig {
                         .permitAll()                            // 로그인 페이지는 누구나 접근
                 )
 
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> res.sendRedirect("/access-denied"))
+                        .accessDeniedHandler((req, res, e) -> res.sendRedirect("/access-denied"))
+                )
+
                 // 로그아웃 설정
                 .logout(logout -> logout
                         .logoutUrl("/logout")                   // 로그아웃 URL
@@ -75,17 +92,22 @@ public class SecurityConfig {
 
                 // Remember-me (선택사항)
                 .rememberMe(remember -> remember
+                        .userDetailsService(userDetailsService)
                         .key("smartstore-remember-me-key")      // 쿠키 암호화 키
                         .tokenValiditySeconds(86400 * 7)        // 7일간 유효
                         .rememberMeParameter("remember-me")     // 체크박스 name
-                );
+                )
+
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable());
 
         return http.build();
     }
 
+
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // BCrypt 암호화 (강도 10 - 기본값)
         return new BCryptPasswordEncoder();
     }
+
 }

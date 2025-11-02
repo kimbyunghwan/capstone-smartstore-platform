@@ -88,7 +88,6 @@ public class OrderService {
     }
 
     // -- helpers --
-
     private Map<Long, ProductOption> loadOptions(List<CreateOrderReq.Item> items) {
         List<Long> ids = items.stream().map(CreateOrderReq.Item::optionId).toList();
         List<ProductOption> opts = optionRepo.findAllById(ids);

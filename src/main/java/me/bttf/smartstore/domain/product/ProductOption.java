@@ -43,6 +43,9 @@ public class ProductOption extends BaseEntity {
     @Column(name = "stock_qty", nullable = false)
     private Integer stockQty = 0; // 현재 재고 수량 (default 0)
 
+    @Column(name = "low_stock_threshold")
+    private Integer lowStockThreshold;
+
     @Builder
     private ProductOption(Product product, String sku, String optionName, String attrJson, Money price, Integer stockQty) {
         if (product == null) throw new IllegalArgumentException("product는 필수");
@@ -69,4 +72,13 @@ public class ProductOption extends BaseEntity {
         if (newQty < 0) throw new IllegalArgumentException("재고는 0 이상");
         this.stockQty = newQty;
     }
+
+    public Integer getLowStockThreshold() {
+        return lowStockThreshold;
+    }
+
+    public void changeLowStockThreshold(Integer th) {
+        this.lowStockThreshold = th;
+    }
+
 }

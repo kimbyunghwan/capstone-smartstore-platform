@@ -21,14 +21,12 @@ import java.util.List;
                 @Index(name = "ix_category_parent", columnList = "parent_id")
         }
 )
-@AttributeOverride(name = "id", column = @Column(name = "category_id"))
-public class Category extends BaseEntity {
+public class Category {
 
-    @Column(nullable = false, length = 100)
-    private String name;
-
-    @Column(nullable = false)
-    private Integer depth;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "category_id")
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
@@ -37,12 +35,25 @@ public class Category extends BaseEntity {
     @OneToMany(mappedBy = "parent")
     private List<Category> children = new ArrayList<>();
 
-    public Category(String name, int depth, Category parent) {
-        if (depth < 1 || depth > 3) {
+    @Column(nullable = false, length = 100)
+    private String name;
+
+    @Column(nullable = false)
+    private int depth;   // 1부터 시작
+
+    public Category(String name, Integer depth, Category parent) {
+        this.parent = parent;
+        this.name = name;
+        // depth가 null이면 부모 기준으로 자동 계산
+        this.depth = (depth != null) ? depth : (parent == null ? 1 : parent.getDepth() + 1);
+        if (this.depth < 1 || this.depth > 3) {
             throw new IllegalArgumentException("카테고리 깊이는 1~3만 허용");
         }
-        this.name = name;
-        this.depth = depth;
-        this.parent = parent;
+    }
+
+    /** 부모를 바꾸면 depth도 자동 보정 */
+    public void attachTo(Category newParent) {
+        this.parent = newParent;
+        this.depth = (newParent == null ? 1 : newParent.getDepth() + 1);
     }
 }

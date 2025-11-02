@@ -46,7 +46,7 @@
             </div>
 
             <div class="button-group">
-                <button class="btn btn-secondary" onclick="location.href='/seller/product-new'">+ 상품 추가</button>
+                <button class="btn btn-secondary" onclick="location.href='/seller/products/new'">+ 상품 추가</button>
             </div>
         </div>
 
@@ -108,13 +108,11 @@
                         </div>
                     </td>
                     <td>
-                                <span class="status-badge"
-                                      th:classappend="${product.stockQty > 10} ? 'in-stock' :
-                                                       (${product.stockQty > 0} ? 'low-stock' : 'out-of-stock')"
-                                      th:text="${product.stockQty > 10} ? '재고 있음' :
-                                               (${product.stockQty > 0} ? '부족' : '품절')">
-                                    재고 있음
-                                </span>
+                      <span class="status-badge"
+                            th:classappend="${product.soldOut} ? 'out-of-stock' : (${product.low} ? 'low-stock' : 'in-stock')"
+                            th:text="${product.soldOut} ? '품절' : (${product.low} ? '부족' : '재고 있음')">
+                        재고 있음
+                      </span>
                     </td>
                     <td>
                         <div class="action-buttons">
@@ -128,7 +126,7 @@
                 <tr class="empty-row" th:if="${products == null or products.isEmpty()}">
                     <td colspan="8" class="empty-message">
                         <p>등록된 상품이 없습니다</p>
-                        <a href="/seller/product-new" class="btn btn-primary">상품 등록하기</a>
+                        <a href="/seller/products/new" class="btn btn-primary">상품 등록하기</a>
                     </td>
                 </tr>
                 </tbody>
