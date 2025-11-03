@@ -18,7 +18,10 @@
                     <a href="/login" sec:authorize="!isAuthenticated()">로그인</a>
 
                     <span sec:authorize="isAuthenticated()">
-                      안녕하세요, <strong th:text="${session.LOGIN_MEMBER.name}"></strong>님
+                        안녕하세요,
+                    <strong th:text="${#authentication?.principal instanceof T(me.bttf.smartstore.auth.CustomUserDetails)
+                                     ? #authentication.principal.member.name
+                                     : #authentication?.name}">사용자</strong>님
                       <form th:action="@{/logout}" method="post" style="display:inline">
                           <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                           <button type="submit" class="btn-link">로그아웃</button>

@@ -84,8 +84,9 @@ public class SellerDashboardPageController {
         form.setProductId(id);
         sellerProductService.updateFromForm(form, user.getMember().getId());
         ra.addFlashAttribute("msg", "상품이 수정되었습니다!");
-        return "redirect:/seller/products/" + id + "/edit";
+        return "redirect:/seller/inventory";
     }
+
 
     // 13. 재고 관리
     @GetMapping("/inventory")

@@ -66,7 +66,7 @@ public class OrderService {
             String optionName  = opt.getOptionName();
             BigDecimal unitPrice = opt.getPrice().getAmount();
 
-            OrderItem oi = new OrderItem(order, prod, opt, productName, optionName, new Money(unitPrice), it.qty());
+            OrderItem oi = new OrderItem(order, prod, opt, productName, optionName, Money.of(unitPrice), it.qty());
             order.addItem(oi);
 
             total = total.add(unitPrice.multiply(BigDecimal.valueOf(it.qty())));
@@ -75,7 +75,7 @@ public class OrderService {
             inventoryService.out(opt.getId(), it.qty(), "고객주문", null);
         }
 
-        order.setTotal(new Money(total));
+        order.setTotal(Money.of(total));
         order.changeStatus(OrderStatus.PENDING); // 결제 전/주문 생성 상태
 
         Order saved = orderRepo.save(order);

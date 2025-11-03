@@ -95,8 +95,9 @@ public class SellerProductService {
         }
 
         var options = optionRepo.findByProduct_Id(p.getId());
-        Money newPrice = Money.of(form.getSalePrice().longValue());
-        int newStock = form.getStockQty();
+        Money newPrice = Money.of(form.getSalePrice());
+        int newStock = (form.getStockQty() != null) ? form.getStockQty() : 0;
+
         for (var opt : options) {
             opt.changePrice(newPrice);
             opt.changeStock(newStock);

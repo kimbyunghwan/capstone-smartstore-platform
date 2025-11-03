@@ -10,6 +10,7 @@ import me.bttf.smartstore.domain.product.ProductOption;
 import me.bttf.smartstore.domain.product.ProductStatus;
 import me.bttf.smartstore.domain.store.Store;
 import me.bttf.smartstore.dto.inventory.InvReq;
+import me.bttf.smartstore.dto.inventory.InventoryRowRes;
 import me.bttf.smartstore.dto.product.ProductListRes;
 import me.bttf.smartstore.dto.seller.ProductCreateReq;
 import me.bttf.smartstore.dto.seller.ProductUpdateReq;
@@ -97,12 +98,13 @@ public class SellerDashboardController {
     @GetMapping("/inventory")
     @Operation(summary = "재고 관리")
     @Transactional(readOnly = true)
-    public Page<ProductOption> listSkus(@RequestParam(required = false) Long productId,
-                                        @PageableDefault(size = 20) Pageable pageable) {
-        if (productId != null) {
-            return optionRepo.findByProduct_Id(productId, pageable);
-        }
-        return optionRepo.findAll(pageable);
+    public Page<InventoryRowRes> listInventory(@RequestParam(required = false) Long productId,
+                                               @PageableDefault(size = 20) Pageable pageable) {
+        Page<ProductOption> options = (productId != null)
+                ? optionRepo.findByProduct_Id(productId, pageable)
+                : optionRepo.findAll(pageable);
+
+        return options.map(InventoryRowRes::from);
     }
 
     // 재고 입고
@@ -126,6 +128,30 @@ public class SellerDashboardController {
     @Operation(summary = "재고 조정")
     public ResponseEntity<Void> stockAdjust(@PathVariable Long optionId, @RequestBody @Valid InvReq req) {
         inventoryService.adjust(optionId, req.qty(), req.reason());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/inventory/{optionId}/set-qty")
+    @Operation(summary = "재고 수량 절대값 설정")
+    @Transactional
+    public ResponseEntity<Void> setQty(@PathVariable Long optionId,
+                                       @RequestBody @Valid InvReq req,
+                                       @AuthenticationPrincipal CustomUserDetails me) {
+        // InvReq: qty(), reason()
+        ProductOption opt = optionRepo.findById(optionId)
+                .orElseThrow(() -> new IllegalArgumentException("옵션이 없습니다: " + optionId));
+
+        int current = opt.getStockQty() != null ? opt.getStockQty() : 0;
+        int target  = req.qty();
+        int delta   = target - current;
+
+        if (delta == 0) return ResponseEntity.ok().build();
+
+        if (delta > 0) {
+            inventoryService.in(optionId, delta, req.reason());
+        } else {
+            inventoryService.out(optionId, Math.abs(delta), req.reason(), null);
+        }
         return ResponseEntity.ok().build();
     }
 }

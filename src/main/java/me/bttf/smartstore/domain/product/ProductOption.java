@@ -73,12 +73,11 @@ public class ProductOption extends BaseEntity {
         this.stockQty = newQty;
     }
 
-    public Integer getLowStockThreshold() {
-        return lowStockThreshold;
-    }
-
     public void changeLowStockThreshold(Integer th) {
         this.lowStockThreshold = th;
     }
 
+    public boolean isLowStock() {
+        return lowStockThreshold != null && stockQty != null && stockQty <= lowStockThreshold;
+    }
 }

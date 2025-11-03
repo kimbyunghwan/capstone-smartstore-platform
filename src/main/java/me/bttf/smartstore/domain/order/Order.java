@@ -60,7 +60,7 @@ public class Order extends BaseEntity {
         this.recvAddress = Objects.requireNonNull(recvAddress);
         this.recvMemo = recvMemo;
         this.status = OrderStatus.PENDING;
-        this.orderTotal = new Money(java.math.BigDecimal.ZERO);
+        this.orderTotal = Money.of(java.math.BigDecimal.ZERO);
     }
 
     public void addItem(OrderItem item) {
