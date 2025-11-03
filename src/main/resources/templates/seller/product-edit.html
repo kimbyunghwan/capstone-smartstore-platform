@@ -30,7 +30,7 @@
 
                 <div class="form-group">
                     <label>상품명 <span class="required">*</span></label>
-                    <input type="text" name="name" th:value="${product?.name}" placeholder="상품명을 입력하세요" maxlength="100" required />
+                    <input type="text" name="productName" th:value="${product?.name}" placeholder="상품명을 입력하세요" maxlength="100" required />
                     <span class="char-count"><span id="name-count" th:text="${product?.name?.length() ?: 0}">0</span>/100</span>
                 </div>
 
@@ -47,24 +47,36 @@
                     </select>
                 </div>
 
-<!--                <div class="form-row">-->
-<!--                    <div class="form-group">-->
-<!--                        <label>정가 <span class="required">*</span></label>-->
-<!--                        <input type="number" name="originalPrice" th:value="${product?.originalPrice}" placeholder="0" min="0" required />-->
-<!--                        <span class="unit">원</span>-->
-<!--                    </div>-->
-<!--                    <div class="form-group">-->
-<!--                        <label>판매가 <span class="required">*</span></label>-->
-<!--                        <input type="number" name="salePrice" th:value="${product?.salePrice}" placeholder="0" min="0" required />-->
-<!--                        <span class="unit">원</span>-->
-<!--                    </div>-->
-<!--                </div>-->
+                <div class="form-row">
+                    <!-- 기존: th:value="${product?.originalPrice}" (엔티티에 없음) -->
+                    <div class="form-row">
+<!--                        <div class="form-group">-->
+<!--                            <label>정가 <span class="required">*</span></label>-->
+<!--                            <input type="number" name="originalPrice"-->
+<!--                                   th:value="${product != null and product.options != null and !product.options.isEmpty()-->
+<!--                      ? product.options.get(0).price.amount-->
+<!--                      : ''}"-->
+<!--                                   placeholder="0" min="0" required />-->
+<!--                            <span class="unit">원</span>-->
+<!--                        </div>-->
 
-<!--                <div class="form-group">-->
-<!--                    <label>할인율</label>-->
-<!--                    <input type="number" name="discountRate" th:value="${product?.discountRate}" placeholder="0" min="0" max="100" />-->
-<!--                    <span class="unit">%</span>-->
-<!--                </div>-->
+                        <div class="form-group">
+                            <label>판매가 <span class="required">*</span></label>
+                            <input type="number" name="salePrice" step = 1
+                                   th:value="${product != null and product.options != null and !product.options.isEmpty()
+                      ? product.options.get(0).price.amount
+                      : ''}"
+                                   placeholder="0" min="0" required />
+                            <span class="unit">원</span>
+                        </div>
+                    </div>
+
+<!--                    <div class="form-group">-->
+<!--                        <label>할인율</label>-->
+<!--                        &lt;!&ndash; 엔티티에 필드가 없으므로 일단 빈 값(또는 0) &ndash;&gt;-->
+<!--                        <input type="number" name="discountRate" th:value="${null}" placeholder="0" min="0" max="100" />-->
+<!--                        <span class="unit">%</span>-->
+<!--                    </div>-->
             </div>
 
             <!-- 상품 설명 섹션 -->

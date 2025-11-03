@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import me.bttf.smartstore.domain.category.ProductCategory;
 import me.bttf.smartstore.domain.common.BaseEntity;
 import me.bttf.smartstore.domain.review.Review;
 import me.bttf.smartstore.domain.store.Store;
@@ -71,4 +72,5 @@ public class Product extends BaseEntity {
         this.shortDescription = shortDesc;
         this.description = desc;
     }
+
 }

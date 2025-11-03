@@ -38,4 +38,5 @@ public class CartItem extends BaseEntity {
     @Min(1)
     @Column(nullable = false)
     private Integer qty;
+
 }
