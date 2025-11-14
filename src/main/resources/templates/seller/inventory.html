@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스마트스토어 - 재고 관리</title>
     <link th:href="@{/css/store.css}" rel="stylesheet" />
+
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
 </head>
 <body>
 <!-- 헤더 삽입 -->
@@ -26,24 +29,24 @@
                 <button class="btn btn-search">검색</button>
             </div>
 
-            <div class="filter-options">
-                <select id="category-filter">
-                    <option value="">전체 카테고리</option>
-                    <option value="fashion">패션·의류</option>
-                    <option value="beauty">뷰티·미용</option>
-                    <option value="food">식품·건강</option>
-                    <option value="digital">디지털·가전</option>
-                    <option value="sports">스포츠·레저</option>
-                    <option value="home">홈·리빙</option>
-                </select>
+<!--            <div class="filter-options">-->
+<!--                <select id="category-filter">-->
+<!--                    <option value="">전체 카테고리</option>-->
+<!--                    <option value="fashion">패션·의류</option>-->
+<!--                    <option value="beauty">뷰티·미용</option>-->
+<!--                    <option value="food">식품·건강</option>-->
+<!--                    <option value="digital">디지털·가전</option>-->
+<!--                    <option value="sports">스포츠·레저</option>-->
+<!--                    <option value="home">홈·리빙</option>-->
+<!--                </select>-->
 
-                <select id="stock-filter">
-                    <option value="">전체</option>
-                    <option value="in-stock">재고 있음</option>
-                    <option value="low-stock">재고 부족</option>
-                    <option value="out-of-stock">품절</option>
-                </select>
-            </div>
+<!--                <select id="stock-filter">-->
+<!--                    <option value="">전체</option>-->
+<!--                    <option value="in-stock">재고 있음</option>-->
+<!--                    <option value="low-stock">재고 부족</option>-->
+<!--                    <option value="out-of-stock">품절</option>-->
+<!--                </select>-->
+<!--            </div>-->
 
             <div class="button-group">
                 <button class="btn btn-secondary" onclick="location.href='/seller/products/new'">+ 상품 추가</button>
@@ -89,35 +92,44 @@
                 </thead>
                 <tbody>
                 <!-- 상품 데이터 -->
-                <tr class="product-row" th:each="product : ${products}">
+                <tr class="product-row" th:each="p : ${products}">
                     <td>
-                        <input type="checkbox" class="product-check" th:value="${product.productId}" />
+                        <input type="checkbox" class="product-check" th:value="${p.optionId()}" th:attr="data-product-id=${p.productId}" />
                     </td>
+
                     <td>
-                        <img class="product-thumb" th:src="@{${product.imageUrl}}" th:alt="${product.name}" />
+                        <img class="product-thumb" th:src="@{${p.imageUrl}}" th:alt="${p.name}" />
                     </td>
+
                     <td class="product-name-cell">
-                        <div class="product-name" th:text="${product.name}">상품명</div>
-                        <div class="product-id" th:text="'ID: ' + ${product.productId}">ID: 12345</div>
+                        <div class="product-name" th:text="${p.name}">상품명</div>
+                        <div class="product-id"   th:text="'ID: ' + ${p.productId}">ID: 0</div>
                     </td>
-                    <td th:text="${product.category}">패션</td>
-                    <td class="price" th:text="${#numbers.formatInteger(product.salePrice, 0, 'COMMA')} + '원'">29,900원</td>
+
+                    <td th:text="${p.category}">카테고리</td>
+
+                    <td class="price"
+                        th:text="${#numbers.formatInteger(p.salePrice, 0, 'COMMA')} + '원'">0원</td>
+
                     <td>
                         <div class="stock-input-group">
-                            <input type="number" class="stock-qty" th:value="${product.stockQty}" min="0" />
+                            <input type="number" class="stock-qty" th:value="${p.stockQty}" min="0" />
                         </div>
                     </td>
+
                     <td>
                       <span class="status-badge"
-                            th:classappend="${product.soldOut} ? 'out-of-stock' : (${product.low} ? 'low-stock' : 'in-stock')"
-                            th:text="${product.soldOut} ? '품절' : (${product.low} ? '부족' : '재고 있음')">
-                        재고 있음
-                      </span>
+                            th:classappend="${p.soldOut} ? 'out-of-stock' : (${p.low} ? 'low-stock' : 'in-stock')"
+                            th:text="${p.soldOut} ? '품절' : (${p.low} ? '부족' : '재고 있음')">재고 있음</span>
                     </td>
+
                     <td>
                         <div class="action-buttons">
-                            <button class="btn-action save" th:onclick="'updateStock(' + ${product.productId} + ')'">저장</button>
-                            <button class="btn-action edit" th:onclick="'location.href=\'/seller/products/' + ${product.productId} + '/edit\''">수정</button>
+                            <button class="btn-action save"
+                                    th:attr="onclick=|updateProductStock(${p.optionId})|">저장</button>
+
+                            <button class="btn-action edit"
+                                    th:attr="onclick=|location.href='/seller/products/${p.productId}/edit'|">수정</button>
                         </div>
                     </td>
                 </tr>
@@ -140,7 +152,7 @@
             </div>
             <div class="bulk-buttons">
                 <button class="btn btn-secondary" onclick="bulkDelete()">선택 삭제</button>
-                <button class="btn btn-secondary" onclick="bulkUpdateStock()">재고 일괄 변경</button>
+<!--                <button class="btn btn-secondary" onclick="bulkUpdateStock()">재고 일괄 변경</button>-->
             </div>
         </div>
 
@@ -187,63 +199,64 @@
     }
 
     // 개별 재고 업데이트
-    function updateStock(productId) {
-        const row = document.querySelector(`input[value="${productId}"]`).closest('.product-row');
+    function updateProductStock(optionId) {
+        const row = document.querySelector(`input.product-check[value="${optionId}"]`)?.closest('.product-row');
+        if (!row) { alert('행을 찾을 수 없습니다.'); return; }
+
         const stockQty = row.querySelector('.stock-qty').value;
 
         if (confirm(`재고를 ${stockQty}개로 변경하시겠습니까?`)) {
-            fetch(`/seller/products/${productId}/stock`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ stockQty: parseInt(stockQty) })
+            fetch(`/api/v1/seller/set-qty`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    optionId: optionId,
+                    qty: parseInt(stockQty, 10)
+                })
             })
-                .then(response => {
-                    if (response.ok) {
+                .then(res => {
+                    if (res.ok) {
                         alert('재고가 업데이트되었습니다.');
                         location.reload();
                     } else {
-                        alert('오류가 발생했습니다.');
+                        res.text().then(msg => alert('오류 발생: ' + msg));
                     }
                 })
-                .catch(error => {
+                .catch(err => {
+                    console.error('Error:', err);
                     alert('요청 중 오류가 발생했습니다.');
-                    console.error('Error:', error);
                 });
         }
     }
 
     // 일괄 삭제
-    function bulkDelete() {
+    async function bulkDelete() {
         const checked = document.querySelectorAll('.product-check:checked');
-        if (checked.length === 0) {
-            alert('선택한 상품이 없습니다.');
+        if (checked.length === 0) { alert('선택한 상품이 없습니다.'); return; }
+        if (!confirm(`선택한 ${checked.length}개 상품을 삭제하시겠습니까?`)) return;
+
+        const productIds = Array.from(checked)
+            .map(cb => Number(cb.dataset.productId))
+            .filter(Boolean);
+        const unique = [...new Set(productIds)];
+
+        const res = await fetch('/api/v1/seller/products/bulk-delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ productIds: unique })
+        });
+
+        const ct = res.headers.get('content-type') || '';
+        if (!res.ok || !ct.includes('application/json')) {
+            alert('삭제 실패(권한/CSRF).');
             return;
         }
-
-        if (confirm(`선택한 ${checked.length}개 상품을 삭제하시겠습니까?`)) {
-            const productIds = Array.from(checked).map(cb => cb.value);
-
-            fetch(`/seller/products/bulk-delete`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ productIds: productIds })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        alert('상품이 삭제되었습니다.');
-                        location.reload();
-                    } else {
-                        alert('오류가 발생했습니다.');
-                    }
-                })
-                .catch(error => {
-                    alert('요청 중 오류가 발생했습니다.');
-                    console.error('Error:', error);
-                });
+        const data = await res.json();
+        if (data.success) {
+            alert(`삭제 완료 (${data.deleted}개)`);
+            location.reload();
+        } else {
+            alert('삭제 실패');
         }
     }
 
@@ -267,7 +280,7 @@
                 },
                 body: JSON.stringify({
                     productIds: productIds,
-                    stockQty: parseInt(quantity)
+                    stockQty: parseInt(quantity, 10)
                 })
             })
                 .then(response => {

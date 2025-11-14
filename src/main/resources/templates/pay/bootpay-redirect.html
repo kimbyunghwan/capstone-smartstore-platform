@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>결제 처리중…</title></head>
+<body>
+<script>
+    (async () => {
+        const receiptId = '[[${receiptId}]]';
+        const orderId   = '[[${orderId}]]';
+
+        if (!receiptId) {
+            alert('영수증 정보가 없습니다.');
+            location.href = '/'; // 적절한 페이지로
+            return;
+        }
+
+        // 금액은 서버에서 다시 계산하는 게 정석
+        const payload = { receiptId, orderId, amount: 0 };
+        const res = await fetch('/api/pay/bootpay/verify', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            alert('결제가 완료되었습니다.');
+            location.href = '/';
+        } else {
+            alert('결제 검증 실패: ' + (data.message || 'fail'));
+            location.href = '/';
+        }
+    })();
+</script>
+결제를 확인 중입니다…
+</body>
+</html>

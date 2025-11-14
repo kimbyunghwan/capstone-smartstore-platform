@@ -58,33 +58,47 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     """)
     List<ProductCardRes> findTopBest(@Param("status") ProductStatus status, Pageable pageable);
 
-    @Query("""
-        select new me.bttf.smartstore.dto.inventory.InventoryRowRes(
-          p.id,
-          p.name,
-          coalesce(p.thumbnailUrl, '/img/placeholder.png'),
-          coalesce(cast(min(o.price.amount) as bigdecimal), cast(0 as bigdecimal)),
-          coalesce(sum(coalesce(o.stockQty,0)), 0),
-          p.status,
-          coalesce(
-            (select c.name from ProductCategory pc join pc.category c
-              where pc.product = p and pc.primaryCategory = true),
-            '-'
-          ),
-          case when coalesce(sum(coalesce(o.stockQty,0)),0) <= 0 then true else false end,
-          case when coalesce(sum(coalesce(o.stockQty,0)),0) > 0
-                and sum(case when o.lowStockThreshold is not null and o.lowStockThreshold > 0
-                              and coalesce(o.stockQty,0) <= o.lowStockThreshold then 1 else 0 end) > 0 then true else false end
+    @Query(value = """
+    select new me.bttf.smartstore.dto.inventory.InventoryRowRes(
+        o.id,
+        p.id,
+        p.name,
+        coalesce(p.thumbnailUrl, '/img/placeholder.png'),
+        o.price.amount,
+        cast(coalesce(o.stockQty,0) as long),
+        p.status,
+        coalesce(c.name, ''),
+        (coalesce(o.stockQty,0) = 0),
+        (coalesce(o.lowStockThreshold,0) > 0 and coalesce(o.stockQty,0) <= coalesce(o.lowStockThreshold,0))
+    )
+    from ProductOption o
+    join o.product p
+    left join ProductCategory pc on pc.product = p and pc.primaryCategory = true
+    left join pc.category c
+    where p.store.id = :storeId
+      and (
+           :q is null or :q = ''\s
+           or lower(coalesce(p.name, '')) like concat('%', lower(:q), '%')
+           or cast(p.id as string) like concat('%', :q, '%')
+           or coalesce(o.sku, '') like concat('%', :q, '%')
+           or lower(coalesce(o.optionName, '')) like concat('%', lower(:q), '%')
+      )
+    order by p.createdAt desc, o.id asc
+    """,
+                countQuery = """
+    select count(o)
+    from ProductOption o
+    join o.product p
+    where p.store.id = :storeId
+      and (
+           :q is null or :q = ''\s
+           or lower(coalesce(p.name, '')) like concat('%', lower(:q), '%')
+           or cast(p.id as string) like concat('%', :q, '%')
+           or coalesce(o.sku, '') like concat('%', :q, '%')
+           or lower(coalesce(o.optionName, '')) like concat('%', lower(:q), '%')
+      )
+    """
         )
-        from Product p
-        left join p.options o
-        where p.store.id = :storeId
-          and (:q is null or :q = ''
-               or lower(p.name) like lower(concat('%', :q, '%'))
-               or cast(p.id as string) like concat('%', :q, '%'))
-        group by p.id, p.name, p.thumbnailUrl
-        order by p.createdAt desc
-        """)
     Page<InventoryRowRes> findInventory(@Param("storeId") Long storeId,
                                         @Param("q") String q,
                                         Pageable pageable);

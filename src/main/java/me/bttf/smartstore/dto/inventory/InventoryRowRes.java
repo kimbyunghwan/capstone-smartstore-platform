@@ -5,6 +5,7 @@ import me.bttf.smartstore.domain.product.ProductStatus;
 import java.math.BigDecimal;
 
 public record InventoryRowRes(
+        Long optionId,
         Long productId,
         String name,
         String imageUrl,

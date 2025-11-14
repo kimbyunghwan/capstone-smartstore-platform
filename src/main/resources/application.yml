@@ -48,3 +48,8 @@ app:
     secret: ${JWT_SECRET}
     issuer: "smartstore"
     access-token-ttl-minutes: 120
+
+bootpay:
+  app-id: ${BOOTPAY_APP_ID}
+  rest-key: ${BOOTPAY_REST_KEY}
+  private-key: ${BOOTPAY_PRIVATE_KEY}

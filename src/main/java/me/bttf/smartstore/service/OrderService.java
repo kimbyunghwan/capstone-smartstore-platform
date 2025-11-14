@@ -66,7 +66,7 @@ public class OrderService {
             String optionName  = opt.getOptionName();
             BigDecimal unitPrice = opt.getPrice().getAmount();
 
-            OrderItem oi = new OrderItem(order, prod, opt, productName, optionName, new Money(unitPrice), it.qty());
+            OrderItem oi = new OrderItem(order, prod, opt, productName, optionName, Money.of(unitPrice), it.qty());
             order.addItem(oi);
 
             total = total.add(unitPrice.multiply(BigDecimal.valueOf(it.qty())));
@@ -75,7 +75,7 @@ public class OrderService {
             inventoryService.out(opt.getId(), it.qty(), "고객주문", null);
         }
 
-        order.setTotal(new Money(total));
+        order.setTotal(Money.of(total));
         order.changeStatus(OrderStatus.PENDING); // 결제 전/주문 생성 상태
 
         Order saved = orderRepo.save(order);
@@ -100,6 +100,36 @@ public class OrderService {
         for (ProductOption o : opts) map.put(o.getId(), o);
         return map;
     }
+
+    /** 서버 기준 주문 총액(원)을 다시 계산해서 리턴 */
+    @Transactional(readOnly = true)
+    public int calcTotalAmount(Long orderId) {
+        Order order = orderRepo.findByIdWithItems(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("주문이 없습니다. id=" + orderId));
+
+        // 아이템 기준으로 합산 (Money는 단가, qty는 수량)
+        BigDecimal sum = order.getItems().stream()
+                .map(oi -> oi.getUnitPrice().getAmount().multiply(BigDecimal.valueOf(oi.getQty())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return sum.intValueExact(); // 소수점 없다는 가정(원 단위)
+    }
+
+    /** 결제 성공 시 주문 상태 갱신(+ 영수증/승인시간 등 저장) */
+    public void markPaid(Long orderId, String receiptId) {
+        Order order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("주문이 없습니다. id=" + orderId));
+
+        // 영수증 번호 저장 필드가 있으면 같이 저장
+        // order.setReceiptId(receiptId); // 없으면 주석 유지하거나 필드 추가
+
+        // 상태값은 프로젝트 enum에 맞춰 사용 (예: PAID / PAYMENT_COMPLETED 등)
+        order.changeStatus(OrderStatus.PAID);
+
+        // 필요하면 승인 시각도 저장
+        // order.setPaidAt(LocalDateTime.now());
+    }
+
 
     private OrderRes toRes(Order o) {
         return new OrderRes(

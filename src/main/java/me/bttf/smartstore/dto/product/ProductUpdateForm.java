@@ -1,12 +1,10 @@
 package me.bttf.smartstore.dto.product;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -21,12 +19,12 @@ public class ProductUpdateForm {
     private String category;
 
     @NotNull
-    @Min(0)
-    private Integer originalPrice;
+    @DecimalMin("0.00")
+    private BigDecimal originalPrice;
 
     @NotNull
-    @Min(0)
-    private Integer salePrice;
+    @DecimalMin("0.00")
+    private BigDecimal salePrice;
 
     @Min(0)
     @Max(100)
@@ -39,7 +37,7 @@ public class ProductUpdateForm {
 
     @NotNull
     @Min(0)
-    private Integer stockQty;
+    private Integer stockQty = 0;
 
     private String option1Name;
     private String option1Values;

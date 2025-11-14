@@ -30,7 +30,7 @@
 
                 <div class="form-group">
                     <label>상품명 <span class="required">*</span></label>
-                    <input type="text" name="name" th:value="${product?.name}" placeholder="상품명을 입력하세요" maxlength="100" required />
+                    <input type="text" name="productName" th:value="${product?.name}" placeholder="상품명을 입력하세요" maxlength="100" required />
                     <span class="char-count"><span id="name-count" th:text="${product?.name?.length() ?: 0}">0</span>/100</span>
                 </div>
 
@@ -47,24 +47,37 @@
                     </select>
                 </div>
 
-<!--                <div class="form-row">-->
-<!--                    <div class="form-group">-->
-<!--                        <label>정가 <span class="required">*</span></label>-->
-<!--                        <input type="number" name="originalPrice" th:value="${product?.originalPrice}" placeholder="0" min="0" required />-->
-<!--                        <span class="unit">원</span>-->
-<!--                    </div>-->
-<!--                    <div class="form-group">-->
-<!--                        <label>판매가 <span class="required">*</span></label>-->
-<!--                        <input type="number" name="salePrice" th:value="${product?.salePrice}" placeholder="0" min="0" required />-->
-<!--                        <span class="unit">원</span>-->
-<!--                    </div>-->
-<!--                </div>-->
+                <div class="form-row">
+                    <!-- 기존: th:value="${product?.originalPrice}" (엔티티에 없음) -->
+                    <div class="form-row">
+<!--                        <div class="form-group">-->
+<!--                            <label>정가 <span class="required">*</span></label>-->
+<!--                            <input type="number" name="originalPrice"-->
+<!--                                   th:value="${product != null and product.options != null and !product.options.isEmpty()-->
+<!--                      ? product.options.get(0).price.amount-->
+<!--                      : ''}"-->
+<!--                                   placeholder="0" min="0" required />-->
+<!--                            <span class="unit">원</span>-->
+<!--                        </div>-->
 
-<!--                <div class="form-group">-->
-<!--                    <label>할인율</label>-->
-<!--                    <input type="number" name="discountRate" th:value="${product?.discountRate}" placeholder="0" min="0" max="100" />-->
-<!--                    <span class="unit">%</span>-->
-<!--                </div>-->
+                        <div class="form-group">
+                            <label>판매가 <span class="required">*</span></label>
+                            <input type="number" name="salePrice" step = 1
+                                   th:value="${product != null and product.options != null and !product.options.isEmpty()
+                      ? product.options.get(0).price.amount
+                      : ''}"
+                                   placeholder="0" min="0" required />
+                            <span class="unit">원</span>
+                        </div>
+                    </div>
+                </div>
+
+<!--                    <div class="form-group">-->
+<!--                        <label>할인율</label>-->
+<!--                        &lt;!&ndash; 엔티티에 필드가 없으므로 일단 빈 값(또는 0) &ndash;&gt;-->
+<!--                        <input type="number" name="discountRate" th:value="${null}" placeholder="0" min="0" max="100" />-->
+<!--                        <span class="unit">%</span>-->
+<!--                    </div>-->
             </div>
 
             <!-- 상품 설명 섹션 -->
@@ -125,30 +138,6 @@
 <!--                    </div>-->
 <!--                </div>-->
             </div>
-
-<!--            &lt;!&ndash; 재고 섹션 &ndash;&gt;-->
-<!--            <div class="form-section-box">-->
-<!--                <h3 class="section-title">재고 정보</h3>-->
-
-<!--                <div class="form-group">-->
-<!--                    <label>재고 수량 <span class="required">*</span></label>-->
-<!--                    <input type="number" name="stockQty" th:value="${product?.stockQty}" placeholder="0" min="0" required />-->
-<!--                </div>-->
-
-<!--                <div class="form-group">-->
-<!--                    <label>옵션 설정</label>-->
-<!--                    <div class="option-settings">-->
-<!--                        <div class="option-item">-->
-<!--                            <input type="text" name="option1Name" th:value="${product?.option1Name}" placeholder="옵션명 (예: 색상)" />-->
-<!--                            <textarea name="option1Values" placeholder="옵션값 (쉼표로 구분)" rows="3" th:text="${product?.option1Values}"></textarea>-->
-<!--                        </div>-->
-<!--                        <div class="option-item">-->
-<!--                            <input type="text" name="option2Name" th:value="${product?.option2Name}" placeholder="옵션명 (예: 사이즈)" />-->
-<!--                            <textarea name="option2Values" placeholder="옵션값 (쉼표로 구분)" rows="3" th:text="${product?.option2Values}"></textarea>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
 
 <!--            &lt;!&ndash; 배송 섹션 &ndash;&gt;-->
 <!--            <div class="form-section-box">-->
@@ -222,7 +211,6 @@
                     <button type="submit" class="btn btn-submit" style="padding: 16px 48px; background: #2563EB; border: none; color: white; font-size: 16px; font-weight: 600; border-radius: 8px; cursor: pointer;">수정 완료</button>
                 </div>
             </div>
-
         </form>
     </div>
 </section>
@@ -282,12 +270,12 @@
     function deleteProduct() {
         if (confirm('정말 이 상품을 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.')) {
             if (confirm('삭제를 다시 한 번 확인해주세요.')) {
-                // TODO: 서버에 삭제 요청
                 alert('상품이 삭제되었습니다.');
                 location.href = '/seller/inventory';
             }
         }
     }
+
 </script>
 </body>
 </html>

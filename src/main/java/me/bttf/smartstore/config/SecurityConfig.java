@@ -1,9 +1,11 @@
 package me.bttf.smartstore.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -12,6 +14,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -25,10 +29,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 // CSRF 설정
-                .csrf(csrf -> csrf
-                        // API 경로는 CSRF 비활성화 (JWT 사용 시)
-                        .ignoringRequestMatchers("/api/**")
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**")
                 )
+
+                .securityContext(security -> security.requireExplicitSave(false))
 
                 // 인가 규칙
                 .authorizeHttpRequests(auth -> auth
@@ -50,10 +54,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/uploads/**", "/files/**", "/thumbnails/**", "/static/**")
                         .permitAll()
 
-                        // 판매자 경로 (SELLER 역할 필요)
-                        .requestMatchers("/seller/**").hasRole("SELLER")
+                        // 판매자 경로 (SELLER)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/seller/**").hasRole("SELLER")
 
-                        // 관리자 경로 (ADMIN 역할 필요)
+                        // 관리자 경로 (ADMIN)
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // 그 외 모든 요청은 인증 필요
@@ -71,8 +75,19 @@ public class SecurityConfig {
                 )
 
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((req, res, e) -> res.sendRedirect("/access-denied"))
-                        .accessDeniedHandler((req, res, e) -> res.sendRedirect("/access-denied"))
+                        // 인증 안 된 API 요청 → 401 (리다이렉트 금지)
+                        .defaultAuthenticationEntryPointFor(
+                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                                new AntPathRequestMatcher("/api/**")
+                        )
+                        // 인가 실패(권한 없음)
+                        .accessDeniedHandler((req, res, e) -> {
+                            if (req.getRequestURI().startsWith("/api/")) {
+                                res.sendError(HttpServletResponse.SC_FORBIDDEN); // 403
+                            } else {
+                                res.sendRedirect("/access-denied");
+                            }
+                        })
                 )
 
                 // 로그아웃 설정
@@ -98,7 +113,6 @@ public class SecurityConfig {
                         .rememberMeParameter("remember-me")     // 체크박스 name
                 )
 
-                .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable());
 
         return http.build();

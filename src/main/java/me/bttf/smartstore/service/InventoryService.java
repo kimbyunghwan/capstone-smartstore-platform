@@ -6,6 +6,7 @@ import me.bttf.smartstore.domain.inventory.TxType;
 import me.bttf.smartstore.domain.product.ProductOption;
 import me.bttf.smartstore.repository.InventoryTxRepository;
 import me.bttf.smartstore.repository.ProductOptionRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,5 +83,28 @@ public class InventoryService {
 
     private void assertPositive(int qty, String msg) {
         if (qty <= 0) throw new IllegalArgumentException(msg);
+    }
+
+    public void setQty(long ownerId, long optionId, int newQty) {
+        if (newQty < 0) throw new IllegalArgumentException("수량은 0 이상이어야 합니다.");
+
+        // 1) 소유자 검증
+        boolean owns = optionRepo.existsByIdAndProductStoreOwnerId(optionId, ownerId);
+        if (!owns) throw new AccessDeniedException("권한이 없습니다.");
+
+        // 2) 현재 순재고(null 안전)
+        Integer cur = currentNet(optionId); // calcNetQty 가 COALESCE 되어 있으면 null 아님
+        int current = (cur == null ? 0 : cur);
+
+        // 3) 맞춰야 할 증감치
+        int diff = newQty - current;
+        if (diff == 0) return; // 이미 동일
+
+        // 4) 트랜잭션 기록 남기며 절대값 맞추기
+        if (diff > 0) {
+            in(optionId, diff, "수동 설정(+)");
+        } else {
+            out(optionId, -diff, "수동 설정(-)", null);
+        }
     }
 }

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${product?.name} + ' - 스마트스토어'">상품 상세 - 스마트스토어</title>
     <link th:href="@{/css/store.css}" rel="stylesheet" />
+    <script src="https://js.bootpay.co.kr/bootpay-5.1.5.min.js" type="application/javascript"></script>
 </head>
 <body>
 <!-- 헤더 삽입 -->
@@ -256,6 +257,100 @@
 <!-- 푸터 삽입 -->
 <div th:replace="~{fragments/footer :: footer}"></div>
 
+<script th:inline="javascript">
+    // === Bootpay 결제 ===
+    (function() {
+        const buyBtn     = document.querySelector('.btn-buy');
+        const optionSel  = document.getElementById('product-option');
+        const qtyInput   = document.querySelector('.qty-input');
+        const unitEl     = document.getElementById('unit-price');
+
+        const BOOTPAY_APP_ID = /*[[${bootpayAppId}]]*/ '';
+
+        // 상품 식별/이름/가격 (없으면 안전한 기본값)
+        const productId   = /*[[${product?.productId}]]*/ 0;
+        const productName = /*[[${product?.name}]]*/ '상품';
+        const basePrice   = parseInt(unitEl?.dataset?.price || '0', 10);
+
+        function currentUnitPrice() {
+            if (optionSel && optionSel.value) {
+                const p = optionSel.selectedOptions[0]?.dataset?.price;
+                if (p) return parseInt(p, 10);
+            }
+            return basePrice;
+        }
+
+        async function verifyOnServer(payload) {
+            const res = await fetch('/api/pay/bootpay/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error(await res.text());
+            return await res.json();
+        }
+
+        buyBtn?.addEventListener('click', async () => {
+
+            // 1) 입력값 확인
+            const optionId = optionSel && optionSel.value ? Number(optionSel.value) : null;
+            if (!optionId) {
+                alert('옵션을 선택하세요.');
+                return;
+            }
+            const qty = Math.max(1, parseInt(qtyInput?.value || '1', 10));
+            const unit = currentUnitPrice();
+            const totalPrice = unit * qty;
+
+            // 2) 결제창 호출
+            const orderId = 'ORD-' + Date.now();
+            const redirectUrl = `${location.origin}/pay/bootpay/redirect`; // 돌아올 URL (절대경로)
+            try {
+
+                const res = await Bootpay.requestPayment({
+                    application_id: BOOTPAY_APP_ID,
+                    price: totalPrice,
+                    order_name: productName,
+                    order_id: orderId,
+                    method: 'card',
+                    items: [{
+                        id: `O${optionId}`,
+                        name: optionId ? `${productName} / 옵션:${optionId}` : productName,  // 상품명
+                        qty: qty,      // 수량
+                        unique: String(optionId),
+                        price: unit    // 단가
+                    }],
+                    extra: {
+                        open_type: 'popup'  // 또는 'iframe'
+                    }
+                });
+
+                // 3) 결제 완료 → 서버 검증
+                if (res?.event === 'done') {
+                    const receiptId = res?.data?.receipt_id;
+                    const payload = {
+                        receiptId,
+                        orderId,
+                        optionId,
+                        qty,
+                        amount: totalPrice
+                    };
+                    console.log('verify payload =', payload);
+                    const v = await verifyOnServer(payload);
+                    if (v.status === 'success') {
+                        alert('결제가 완료되었습니다.');
+                    } else {
+                        alert('결제 검증 실패: ' + (v.message || 'fail'));
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                alert('결제가 취소되었거나 실패했습니다.\n' + e.message);
+            }
+        });
+    })();
+</script>
+
 <!-- 간단한 탭 전환 스크립트 -->
 <script>
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -337,6 +432,8 @@
             }
         });
     }
+
+
 </script>
 </body>
 </html>

@@ -40,4 +40,8 @@ public interface ProductCategoryRepository extends JpaRepository<ProductCategory
     int clearPrimary(@Param("productId") Long productId);
 
     boolean existsById(ProductCategoryId id);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from ProductCategory pc where pc.product.id in :ids")
+    int deleteByProductIds(@Param("ids") List<Long> ids);
 }

@@ -30,6 +30,9 @@ public class Order extends BaseEntity {
     @Column(nullable = false, length = 20)
     private OrderStatus status;
 
+    @Column(name = "order_code", nullable = false, unique = true, length = 40)
+    private String orderCode;
+
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "name",    column = @Column(name = "recv_name",  length = 60,  nullable = false)),
@@ -60,8 +63,11 @@ public class Order extends BaseEntity {
         this.recvAddress = Objects.requireNonNull(recvAddress);
         this.recvMemo = recvMemo;
         this.status = OrderStatus.PENDING;
-        this.orderTotal = new Money(java.math.BigDecimal.ZERO);
+        this.orderTotal = Money.of(java.math.BigDecimal.ZERO);
+        this.orderCode = "ORD-" + System.currentTimeMillis();
     }
+
+
 
     public void addItem(OrderItem item) {
         items.add(item);

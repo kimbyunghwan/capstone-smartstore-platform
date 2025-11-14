@@ -35,6 +35,7 @@ public class SellerProductService {
     private final CategoryRepository categoryRepo;
     private final ImageStorage imageStorage;
     private final ProductCategoryRepository productCategoryRepo;
+    private final InventoryTxRepository inventoryTxRepo;
 
     /* ===================== 1) 폼 기반 ===================== */
 
@@ -95,11 +96,10 @@ public class SellerProductService {
         }
 
         var options = optionRepo.findByProduct_Id(p.getId());
-        Money newPrice = Money.of(form.getSalePrice().longValue());
-        int newStock = form.getStockQty();
+        Money newPrice = Money.of(form.getSalePrice());
+
         for (var opt : options) {
             opt.changePrice(newPrice);
-            opt.changeStock(newStock);
         }
 
         // 판매 상태 토글
@@ -232,5 +232,23 @@ public class SellerProductService {
     /** 상품의 대표 카테고리 ID 조회 */
     public Long getPrimaryCategoryId(Long productId) {
         return productCategoryRepo.findPrimaryCategoryId(productId).orElse(null);
+    }
+
+    public int deleteOwnedProducts(long ownerId, List<Long> reqIds) {
+        // 내 소유 상품만 추리기
+        var myIds = productRepo.findAllById(reqIds).stream()
+                .filter(p -> p.getStore().getOwner().getId().equals(ownerId))
+                .map(Product::getId)
+                .distinct()
+                .toList();
+        if (myIds.isEmpty()) return 0;
+
+        // tx → option → product_category → product
+        inventoryTxRepo.deleteByProductIds(myIds);
+        optionRepo.deleteByProductIds(myIds);
+        productCategoryRepo.deleteByProductIds(myIds);
+
+        productRepo.deleteAllByIdInBatch(myIds);
+        return myIds.size();
     }
 }
