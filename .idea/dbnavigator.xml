@@ -4,14 +4,472 @@
     <mappings />
     <preferences />
   </component>
+  <component name="DBNavigator.Project.DataEditorManager">
+    <record-view-column-sorting-type value="BY_INDEX" />
+    <value-preview-text-wrapping value="false" />
+    <value-preview-pinned value="false" />
+  </component>
   <component name="DBNavigator.Project.DatabaseAssistantManager">
-    <assistants />
+    <assistants>
+      <assistant-state connection-id="ccce5f29-8ac5-4250-ac92-20eb17dad449" default-profile-name="" selected-conversation-id="" assistant-type="GENERIC" availability="UNAVAILABLE" acknowledgement="NONE">
+        <conversations />
+      </assistant-state>
+    </assistants>
+  </component>
+  <component name="DBNavigator.Project.DatabaseBrowserManager">
+    <autoscroll-to-editor value="false" />
+    <autoscroll-from-editor value="true" />
+    <show-object-properties value="true" />
+    <loaded-nodes />
+  </component>
+  <component name="DBNavigator.Project.DatabaseConsoleManager">
+    <connection id="ccce5f29-8ac5-4250-ac92-20eb17dad449">
+      <console name="Connection" type="STANDARD" schema="mysql" session="Main"><![CDATA[-- smartstore 테이블 생성
+CREATE DATABASE smartstore
+  DEFAULT CHARACTER SET utf8mb4
+  COLLATE utf8mb4_general_ci;
+
+-- smartstore 테이블 생성 확인
+USE smartstore;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- 1. member_grade 테이블
+CREATE TABLE `member_grade` (
+   `grade_id` bigint NOT NULL AUTO_INCREMENT,
+   `grade_name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+   `benefit_note` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   PRIMARY KEY (`grade_id`),
+   UNIQUE KEY `UK_gnwpq1j12176q3re2px3krmwp` (`grade_name`),
+   KEY `ix_member_grade_name` (`grade_name`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 2. member 테이블
+CREATE TABLE `member` (
+   `created_at` datetime(6) NOT NULL,
+   `grade_id` bigint DEFAULT NULL,
+   `member_id` bigint NOT NULL AUTO_INCREMENT,
+   `phone` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `name` varchar(60) COLLATE utf8mb4_general_ci NOT NULL,
+   `email` varchar(120) COLLATE utf8mb4_general_ci NOT NULL,
+   `password` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+   `member_type` enum('BUYER','SELLER') COLLATE utf8mb4_general_ci NOT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`member_id`),
+   UNIQUE KEY `uk_member_email` (`email`),
+   KEY `ix_member_grade` (`grade_id`),
+   CONSTRAINT `FKr2c2sl0d1vaseaoanab8s1hyv` FOREIGN KEY (`grade_id`) REFERENCES `member_grade` (`grade_id`)
+ ) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 3. member_role 테이블
+CREATE TABLE `member_role` (
+   `member_id` bigint NOT NULL,
+   `role` enum('USER','SELLER','ADMIN') COLLATE utf8mb4_general_ci NOT NULL,
+   PRIMARY KEY (`member_id`,`role`),
+   CONSTRAINT `fk_member_role_member` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 4. store 테이블
+CREATE TABLE `store` (
+   `created_at` datetime(6) NOT NULL,
+   `id` bigint NOT NULL AUTO_INCREMENT,
+   `owner_member_id` bigint NOT NULL,
+   `store_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+   `description` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `status` enum('ACTIVE','INACTIVE','SUSPENDED') COLLATE utf8mb4_general_ci NOT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`id`),
+   KEY `FK7i861ig2kygbw774r8x9qqd92` (`owner_member_id`),
+   CONSTRAINT `FK7i861ig2kygbw774r8x9qqd92` FOREIGN KEY (`owner_member_id`) REFERENCES `member` (`member_id`)
+ ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 5. product 테이블
+CREATE TABLE `product` (
+   `created_at` datetime(6) NOT NULL,
+   `product_id` bigint NOT NULL AUTO_INCREMENT,
+   `store_id` bigint NOT NULL,
+   `name` varchar(200) COLLATE utf8mb4_general_ci NOT NULL,
+   `status` enum('INACTIVE','ACTIVE','SOLD_OUT') COLLATE utf8mb4_general_ci NOT NULL,
+   `thumbnail_url` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `short_description` varchar(200) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `description` tinytext COLLATE utf8mb4_general_ci,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`product_id`),
+   KEY `FKjlfidudl1gwqem0flrlomvlcl` (`store_id`),
+   CONSTRAINT `FKjlfidudl1gwqem0flrlomvlcl` FOREIGN KEY (`store_id`) REFERENCES `store` (`id`)
+ ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 6. product_option 테이블
+CREATE TABLE `product_option` (
+   `price` decimal(14,2) NOT NULL,
+   `stock_qty` int NOT NULL,
+   `created_at` datetime(6) NOT NULL,
+   `option_id` bigint NOT NULL AUTO_INCREMENT,
+   `product_id` bigint NOT NULL,
+   `option_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `sku` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+   `attr_json` json DEFAULT NULL,
+   `low_stock_threshold` int DEFAULT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`option_id`),
+   UNIQUE KEY `UK_e1pe0yhvmpfpmaqoulsniu4my` (`sku`),
+   KEY `ix_product_option_product` (`product_id`),
+   KEY `ix_product_option_sku` (`sku`),
+   CONSTRAINT `FKn4hmm6ex1vgn60c6uiqte400f` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
+ ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 7. inventory_tx 테이블
+CREATE TABLE `inventory_tx` (
+   `qty` int NOT NULL,
+   `created_at` datetime(6) DEFAULT NULL,
+   `option_id` bigint NOT NULL,
+   `related_order_id` bigint DEFAULT NULL,
+   `tx_id` bigint NOT NULL AUTO_INCREMENT,
+   `reason` text COLLATE utf8mb4_general_ci,
+   `tx_type` enum('IN','OUT','ADJUST') COLLATE utf8mb4_general_ci NOT NULL,
+   `updated_at` datetime(6) DEFAULT NULL,
+   PRIMARY KEY (`tx_id`),
+   KEY `ix_inventory_option_created` (`option_id`,`created_at`),
+   CONSTRAINT `FKslr2em71ay0mon0300su4ut4t` FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`)
+ ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 8. category 테이블
+CREATE TABLE `category` (
+   `category_id` bigint NOT NULL AUTO_INCREMENT,
+   `depth` int NOT NULL,
+   `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+   `parent_id` bigint DEFAULT NULL,
+   PRIMARY KEY (`category_id`),
+   UNIQUE KEY `uk_parent_name` (`parent_id`,`name`),
+   KEY `ix_category_parent` (`parent_id`),
+   CONSTRAINT `FK2y94svpmqttx80mshyny85wqr` FOREIGN KEY (`parent_id`) REFERENCES `category` (`category_id`)
+ ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 9.  product_category 테이블
+CREATE TABLE `product_category` (
+   `is_primary` bit(1) NOT NULL,
+   `category_id` bigint NOT NULL,
+   `product_id` bigint NOT NULL,
+   PRIMARY KEY (`category_id`,`product_id`),
+   KEY `ix_pc_product` (`product_id`),
+   KEY `ix_pc_category` (`category_id`),
+   CONSTRAINT `FK2k3smhbruedlcrvu6clued06x` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
+   CONSTRAINT `FKkud35ls1d40wpjb5htpp14q4e` FOREIGN KEY (`category_id`) REFERENCES `category` (`category_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 10. cart 테이블
+CREATE TABLE `cart` (
+   `cart_id` bigint NOT NULL,
+   `created_at` datetime(6) DEFAULT NULL,
+   `member_id` bigint NOT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`cart_id`),
+   KEY `ix_cart_member` (`member_id`),
+   CONSTRAINT `FKix170nytunweovf2v9137mx2o` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 11. cart_item 테이블
+CREATE TABLE `cart_item` (
+   `qty` int NOT NULL,
+   `cart_id` bigint NOT NULL,
+   `cart_item_id` bigint NOT NULL,
+   `created_at` datetime(6) DEFAULT NULL,
+   `option_id` bigint NOT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`cart_item_id`),
+   UNIQUE KEY `uk_cart_option` (`cart_id`,`option_id`),
+   KEY `ix_cart_item_cart` (`cart_id`),
+   KEY `ix_cart_item_option` (`option_id`),
+   CONSTRAINT `FK1uobyhgl1wvgt1jpccia8xxs3` FOREIGN KEY (`cart_id`) REFERENCES `cart` (`cart_id`),
+   CONSTRAINT `FKi7l4r8p7gwhghrdjwdrdl9lyw` FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 12. address 테이블
+CREATE TABLE `address` (
+   `is_default` bit(1) NOT NULL,
+   `address_id` bigint NOT NULL,
+   `created_at` datetime(6) DEFAULT NULL,
+   `member_id` bigint NOT NULL,
+   `addr1` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `addr2` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `phone` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `receiver_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `zipcode` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`address_id`),
+   KEY `ix_address_member` (`member_id`),
+   CONSTRAINT `FKcnw0s8hudme00qu71e3mqd5ih` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 13. orders 테이블
+CREATE TABLE `orders` (
+   `order_total` decimal(14,2) NOT NULL,
+   `created_at` datetime(6) NOT NULL,
+   `member_member_id` bigint DEFAULT NULL,
+   `order_id` bigint NOT NULL,
+   `recv_address_id` bigint DEFAULT NULL,
+   `recv_zip` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
+   `recv_phone` varchar(30) COLLATE utf8mb4_general_ci NOT NULL,
+   `recv_name` varchar(60) COLLATE utf8mb4_general_ci NOT NULL,
+   `recv_addr1` varchar(200) COLLATE utf8mb4_general_ci NOT NULL,
+   `recv_addr2` varchar(200) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `recv_memo` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `status` enum('PENDING','PAID','PARTIALLY_SHIPPED','COMPLETED','CANCELED','REFUNDED') COLLATE utf8mb4_general_ci NOT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   `order_code` varchar(40) COLLATE utf8mb4_general_ci NOT NULL,
+   PRIMARY KEY (`order_id`),
+   UNIQUE KEY `UK_dhk2umg8ijjkg4njg6891trit` (`order_code`),
+   KEY `FKahn6tqgy7jeg0n2yu7q9bav43` (`recv_address_id`),
+   KEY `FK4shribj1m1wfamr4xvfhv1nof` (`member_member_id`),
+   CONSTRAINT `FK4shribj1m1wfamr4xvfhv1nof` FOREIGN KEY (`member_member_id`) REFERENCES `member` (`member_id`),
+   CONSTRAINT `FKahn6tqgy7jeg0n2yu7q9bav43` FOREIGN KEY (`recv_address_id`) REFERENCES `address` (`address_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 14. order_item 테이블
+CREATE TABLE `order_item` (
+   `qty` int NOT NULL,
+   `unit_price` decimal(15,2) NOT NULL,
+   `created_at` datetime(6) NOT NULL,
+   `option_id` bigint NOT NULL,
+   `order_id` bigint NOT NULL,
+   `order_item_id` bigint NOT NULL,
+   `product_id` bigint NOT NULL,
+   `option_name` varchar(200) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `product_name` varchar(200) COLLATE utf8mb4_general_ci NOT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`order_item_id`),
+   KEY `FKg3aykjkb3gk0fof2ir8rioqob` (`option_id`),
+   KEY `FKt4dc2r9nbvbujrljv3e23iibt` (`order_id`),
+   KEY `FK551losx9j75ss5d6bfsqvijna` (`product_id`),
+   CONSTRAINT `FK551losx9j75ss5d6bfsqvijna` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
+   CONSTRAINT `FKg3aykjkb3gk0fof2ir8rioqob` FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`),
+   CONSTRAINT `FKt4dc2r9nbvbujrljv3e23iibt` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 15. payment 테이블
+CREATE TABLE `payment` (
+   `amount` decimal(14,2) NOT NULL,
+   `created_at` datetime(6) DEFAULT NULL,
+   `order_id` bigint NOT NULL,
+   `paid_at` datetime(6) DEFAULT NULL,
+   `payment_id` bigint NOT NULL,
+   `pg_tid` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `method` enum('CARD','VIRTUAL_ACCOUNT','ACCOUNT_TRANSFER','ETC') COLLATE utf8mb4_general_ci NOT NULL,
+   `status` enum('PENDING','AUTHORIZED','CAPTURED','CANCELED','FAILED','REFUNDED','PARTIAL_REFUNDED') COLLATE utf8mb4_general_ci NOT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`payment_id`),
+   UNIQUE KEY `UK_65dvvylnugcqburmf1885b9eo` (`pg_tid`),
+   KEY `FKlouu98csyullos9k25tbpk4va` (`order_id`),
+   KEY `ix_pg_transaction` (`pg_tid`),
+   CONSTRAINT `FKlouu98csyullos9k25tbpk4va` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 16. shipment 테이블
+CREATE TABLE `shipment` (
+   `created_at` datetime(6) DEFAULT NULL,
+   `delivered_at` datetime(6) DEFAULT NULL,
+   `order_id` bigint NOT NULL,
+   `shipment_id` bigint NOT NULL,
+   `shipped_at` datetime(6) DEFAULT NULL,
+   `carrier` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `tracking_no` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+   `status` enum('READY','PICKED','SHIPPED','DELIVERED','RETURNED','LOST') COLLATE utf8mb4_general_ci NOT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`shipment_id`),
+   KEY `ix_shipment_order` (`order_id`),
+   KEY `ix_shipment_tracking_no` (`tracking_no`),
+   CONSTRAINT `FK8amw90d62x67honrwucvjado7` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 17. shipment_item 테이블
+CREATE TABLE `shipment_item` (
+   `qty` int NOT NULL,
+   `created_at` datetime(6) DEFAULT NULL,
+   `order_item_id` bigint NOT NULL,
+   `shipment_id` bigint NOT NULL,
+   `shipment_item_id` bigint NOT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`shipment_item_id`),
+   KEY `FKaej6jb0iww5w8pn826of9nmji` (`order_item_id`),
+   KEY `FKg9el7ry7yhoj8nwhe98iajd4d` (`shipment_id`),
+   CONSTRAINT `FKaej6jb0iww5w8pn826of9nmji` FOREIGN KEY (`order_item_id`) REFERENCES `order_item` (`order_item_id`),
+   CONSTRAINT `FKg9el7ry7yhoj8nwhe98iajd4d` FOREIGN KEY (`shipment_id`) REFERENCES `shipment` (`shipment_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 18. review 테이블
+CREATE TABLE `review` (
+   `rating` int NOT NULL,
+   `created_at` datetime(6) NOT NULL,
+   `member_id` bigint NOT NULL,
+   `product_id` bigint NOT NULL,
+   `review_id` bigint NOT NULL,
+   `content` tinytext COLLATE utf8mb4_general_ci,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`review_id`),
+   UNIQUE KEY `uk_review_product_member` (`product_id`,`member_id`),
+   KEY `ix_review_product` (`product_id`),
+   KEY `ix_review_member` (`member_id`),
+   CONSTRAINT `FKiyof1sindb9qiqr9o8npj8klt` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
+   CONSTRAINT `FKk0ccx5i4ci2wd70vegug074w1` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 19. wishlist 테이블
+CREATE TABLE `wishlist` (
+   `created_at` datetime(6) DEFAULT NULL,
+   `id` bigint NOT NULL,
+   `member_id` bigint NOT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`id`),
+   UNIQUE KEY `uk_wishlist_member` (`member_id`),
+   KEY `ix_wishlist_member` (`member_id`),
+   CONSTRAINT `FKr9m487rorwstnl1r1ib9r5pds` FOREIGN KEY (`member_id`) REFERENCES `member` (`member_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 20. wishlist_item 테이블
+CREATE TABLE `wishlist_item` (
+   `added_at` datetime(6) NOT NULL,
+   `created_at` datetime(6) DEFAULT NULL,
+   `id` bigint NOT NULL,
+   `product_id` bigint NOT NULL,
+   `wishlist_id` bigint NOT NULL,
+   `updated_at` datetime(6) NOT NULL,
+   PRIMARY KEY (`id`),
+   UNIQUE KEY `uk_wishlist_product` (`wishlist_id`,`product_id`),
+   KEY `ix_wishlist_item_wishlist` (`wishlist_id`),
+   KEY `ix_wishlist_item_product` (`product_id`),
+   CONSTRAINT `FK5iw5sajivrxnt4qjxqlgo8yb1` FOREIGN KEY (`wishlist_id`) REFERENCES `wishlist` (`id`),
+   CONSTRAINT `FK5s5jxai41c8tqklyy111ngqh7` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;]]></console>
+    </connection>
+  </component>
+  <component name="DBNavigator.Project.DatabaseEditorStateManager">
+    <last-used-providers />
   </component>
   <component name="DBNavigator.Project.DatabaseFileManager">
-    <open-files />
+    <open-files>
+      <object connection-id="ccce5f29-8ac5-4250-ac92-20eb17dad449" object-ref="consoles/Connection" />
+    </open-files>
+  </component>
+  <component name="DBNavigator.Project.DatabaseSessionManager">
+    <connection id="ccce5f29-8ac5-4250-ac92-20eb17dad449" />
+  </component>
+  <component name="DBNavigator.Project.ExecutionManager">
+    <retain-sticky-names value="false" />
+  </component>
+  <component name="DBNavigator.Project.ObjectQuickFilterManager">
+    <last-used-operator value="EQUAL" />
+    <filters />
   </component>
   <component name="DBNavigator.Project.Settings">
-    <connections />
+    <connections>
+      <connection source-id="" id="ccce5f29-8ac5-4250-ac92-20eb17dad449" active="true" signed="true">
+        <database>
+          <name value="Connection" />
+          <description value="" />
+          <database-type value="MYSQL" />
+          <config-type value="BASIC" />
+          <database-version value="8.0" />
+          <driver-source value="BUNDLED" />
+          <driver-library value="" />
+          <driver value="" />
+          <url-type value="DATABASE" />
+          <host value="awseb-e-mmvw3ap2f4-stack-awsebrdsdatabase-zkppsl9kvrtw.czqoimeeg3et.ap-northeast-2.rds.amazonaws.com" />
+          <port value="3306" />
+          <database value="mysql" />
+          <tns-folder value="" />
+          <tns-profile value="" />
+          <server-type value="" />
+          <protocol value="" />
+          <url-parameters />
+          <type value="USER_PASSWORD" />
+          <user value="admin" />
+          <token-type value="" />
+          <token-config-file value="" />
+          <token-profile value="" />
+          <session-user value="admin@112.145.85.153" />
+        </database>
+        <properties>
+          <auto-commit value="true" />
+        </properties>
+        <ssh-settings>
+          <active value="false" />
+          <proxy-host value="" />
+          <proxy-port value="22" />
+          <proxy-user value="" />
+          <auth-type value="PASSWORD" />
+          <key-file value="" />
+        </ssh-settings>
+        <ssl-settings>
+          <active value="false" />
+          <certificate-authority-file value="" />
+          <client-certificate-file value="" />
+          <client-key-file value="" />
+        </ssl-settings>
+        <details>
+          <charset value="UTF-8" />
+          <session-management value="true" />
+          <ddl-file-binding value="true" />
+          <database-logging value="true" />
+          <connect-automatically value="true" />
+          <restore-workspace value="true" />
+          <restore-workspace-deep value="false" />
+          <environment-type value="default" />
+          <connectivity-timeout value="30" />
+          <idle-time-to-disconnect value="30" />
+          <idle-time-to-disconnect-pool value="5" />
+          <credential-expiry-time value="10" />
+          <max-connection-pool-size value="7" />
+          <alternative-statement-delimiter value="" />
+        </details>
+        <debugger>
+          <compile-dependencies value="true" />
+          <tcp-driver-tunneling value="false" />
+          <tcp-host-address value="" />
+          <tcp-port-from value="4000" />
+          <tcp-port-to value="4999" />
+          <debugger-type value="ASK" />
+        </debugger>
+        <object-filters hide-empty-schemas="false" hide-pseudo-columns="false" hide-audit-columns="false">
+          <object-filters />
+          <object-type-filter use-master-settings="true">
+            <object-type name="SCHEMA" enabled="true" />
+            <object-type name="USER" enabled="true" />
+            <object-type name="ROLE" enabled="true" />
+            <object-type name="PRIVILEGE" enabled="true" />
+            <object-type name="CHARSET" enabled="true" />
+            <object-type name="TABLE" enabled="true" />
+            <object-type name="VIEW" enabled="true" />
+            <object-type name="JSON_VIEW" enabled="true" />
+            <object-type name="MATERIALIZED_VIEW" enabled="true" />
+            <object-type name="NESTED_TABLE" enabled="true" />
+            <object-type name="COLUMN" enabled="true" />
+            <object-type name="INDEX" enabled="true" />
+            <object-type name="CONSTRAINT" enabled="true" />
+            <object-type name="DATASET_TRIGGER" enabled="true" />
+            <object-type name="DATABASE_TRIGGER" enabled="true" />
+            <object-type name="SYNONYM" enabled="true" />
+            <object-type name="SEQUENCE" enabled="true" />
+            <object-type name="PROCEDURE" enabled="true" />
+            <object-type name="FUNCTION" enabled="true" />
+            <object-type name="PACKAGE" enabled="true" />
+            <object-type name="TYPE" enabled="true" />
+            <object-type name="TYPE_ATTRIBUTE" enabled="true" />
+            <object-type name="ARGUMENT" enabled="true" />
+            <object-type name="JAVA_CLASS" enabled="true" />
+            <object-type name="JAVA_FIELD" enabled="true" />
+            <object-type name="JAVA_METHOD" enabled="true" />
+            <object-type name="JAVA_RESOURCE" enabled="true" />
+            <object-type name="DIMENSION" enabled="true" />
+            <object-type name="CLUSTER" enabled="true" />
+            <object-type name="DBLINK" enabled="true" />
+            <object-type name="CREDENTIAL" enabled="true" />
+            <object-type name="AI_PROFILE" enabled="true" />
+          </object-type-filter>
+        </object-filters>
+      </connection>
+    </connections>
     <browser-settings>
       <general>
         <display-mode value="TABBED" />
@@ -442,5 +900,9 @@
         </visibility-settings>
       </environment>
     </general-settings>
+  </component>
+  <component name="DBNavigator.Project.StatementExecutionManager">
+    <execution-variables />
+    <execution-variable-types />
   </component>
 </project>
