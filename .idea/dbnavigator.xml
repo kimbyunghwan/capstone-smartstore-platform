@@ -341,7 +341,9 @@ CREATE TABLE `wishlist_item` (
    CONSTRAINT `FK5s5jxai41c8tqklyy111ngqh7` FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-SET FOREIGN_KEY_CHECKS = 1;]]></console>
+SET FOREIGN_KEY_CHECKS = 1;
+
+show databases;]]></console>
     </connection>
   </component>
   <component name="DBNavigator.Project.DatabaseEditorStateManager">
